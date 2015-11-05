@@ -21,7 +21,8 @@ import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.keycloak_oauth_policy.Messages;
 
-import org.keycloak.VerificationException;
+import org.keycloak.common.VerificationException;
+
 
 /**
  * Policy failures
