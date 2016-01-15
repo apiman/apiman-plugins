@@ -201,6 +201,7 @@
     <module>simple-header-policy</module>
     <module>test-policy</module>
     <module>transformation-policy</module>
+    <module>log-policy</module>
   </modules>
 
   <build>
