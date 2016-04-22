@@ -17,7 +17,7 @@ public class JsonToXmlTransformer implements DataTransformer {
 	    } else {
 	        JSONArray jsonArray = new JSONArray(json);
 	        jsonObject = new JSONObject().put(ELEMENT, jsonArray);
-	        ROOT = "root"  //$NON-NLS-1$
+	        ROOT = "root";  //$NON-NLS-1$
 	    }
         return XML.toString(jsonObject, ROOT);
 	}
