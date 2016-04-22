@@ -6,6 +6,7 @@ import org.json.XML;
 
 public class JsonToXmlTransformer implements DataTransformer {
 
+    private static final String ROOT = null;
     private static final String ELEMENT = "element"; //$NON-NLS-1$
 
     @Override
@@ -16,8 +17,9 @@ public class JsonToXmlTransformer implements DataTransformer {
 	    } else {
 	        JSONArray jsonArray = new JSONArray(json);
 	        jsonObject = new JSONObject().put(ELEMENT, jsonArray);
+	        ROOT = "root"  //$NON-NLS-1$
 	    }
-        return XML.toString(jsonObject);
+        return XML.toString(jsonObject, ROOT);
 	}
 
 }
