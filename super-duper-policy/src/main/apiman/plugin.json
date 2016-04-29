@@ -1,0 +1,6 @@
+{
+	"frameworkVersion": 1.0,
+	"name": "Super Duper Policy Plugin",
+	"description": "A really super plugin that does amazing things.",
+	"version": "${project.version}"
+}

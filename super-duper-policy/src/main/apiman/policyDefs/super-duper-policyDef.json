@@ -1,0 +1,17 @@
+{
+	"id": "super-duper-policy",
+	"name": "Super Duper Policy",
+	"description": "A super duper policy that does amazing things.",
+	"policyImpl": "plugin:${project.groupId}:${project.artifactId}:${project.version}:${project.packaging}/io.apiman.plugins.super_duper_policy.SuperDuperPolicy",
+	"icon": "rocket",
+	"formType": "AngularTemplate",
+	"templates": 
+	[
+		{
+			"language": null,
+			"template": "Appropriate authorization roles are required.  There are @{rules.size()} authorization rules defined."
+		}
+	],
+
+	"form": "templates/super-duper-policy.html"
+}
