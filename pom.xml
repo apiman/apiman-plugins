@@ -4,7 +4,7 @@
 
   <groupId>io.apiman.plugins</groupId>
   <artifactId>apiman-plugins</artifactId>
-  <version>1.2.4-SNAPSHOT</version>
+  <version>1.2.6-SNAPSHOT</version>
   <name>apiman-plugins</name>
   <packaging>pom</packaging>
 
@@ -73,7 +73,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
 
-    <version.apiman>1.2.4-SNAPSHOT</version.apiman>
+    <version.apiman>1.2.5.Final</version.apiman>
 
     <version.javadoc.plugin>2.10.1</version.javadoc.plugin>
     <version.compiler.plugin>3.2</version.compiler.plugin>
@@ -92,7 +92,7 @@
 
     <version.commons-lang>2.6</version.commons-lang>
     <version.com.fasterxml.jackson>2.5.4</version.com.fasterxml.jackson>
-    <version.org.keycloak>1.9.1.Final</version.org.keycloak>
+    <version.org.keycloak>1.9.2.Final</version.org.keycloak>
     <version.org.bouncycastle>1.52</version.org.bouncycastle>
     <version.org.json>20140107</version.org.json>
   </properties>
@@ -153,6 +153,11 @@
       </dependency>
       <dependency>
         <groupId>io.apiman</groupId>
+        <artifactId>apiman-common-util</artifactId>
+        <version>${version.apiman}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.apiman</groupId>
         <artifactId>apiman-gateway-engine-beans</artifactId>
         <version>${version.apiman}</version>
       </dependency>
@@ -168,7 +173,7 @@
       </dependency>
       <dependency>
         <groupId>io.apiman</groupId>
-        <artifactId>apiman-manager-api-core</artifactId>
+        <artifactId>apiman-common-logging-core</artifactId>
         <version>${version.apiman}</version>
       </dependency>
       <dependency>
@@ -239,18 +244,14 @@
   <modules>
     <module>circuit-breaker-policy</module>
     <module>cors-policy</module>
-    <module>config-policy</module>
     <module>http-security-policy</module>
     <module>jsonp-policy</module>
     <module>keycloak-oauth-policy</module>
-    <module>noop-policy</module>
+    <module>log-policy</module>
     <module>simple-header-policy</module>
     <module>soap-authorization-policy</module>
-    <module>test-policy</module>
     <module>transformation-policy</module>
-    <module>log-policy</module>
     <module>url-whitelist-policy</module>
-    
     <module>repository</module>
   </modules>
 
@@ -272,6 +273,20 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>standard</id>
+      <activation>
+        <property>
+          <name>!skipStandard</name>
+        </property>
+      </activation>
+      <modules>
+        <module>config-policy</module>
+        <module>noop-policy</module>
+        <module>test-policy</module>
+      </modules>
+    </profile>
+
     <profile>
       <id>release</id>
       <build>
