@@ -1,6 +1,6 @@
 <div class="custom-form">
     <h1>super-duper-policy.html</h1><p></p>
-    <form name="form.customForm" ng-submit="submit()" novalidate>
+    <form name="form.customForm" novalidate>
         <!-- 1: ng-model must match the key it maps to on the backend -->
         <label for="name">Name</label>
         <input type="text" name="name" ng-model="name" ng-change="changed()" required>
@@ -29,9 +29,6 @@
         Is form valid? {{ form.customForm.$valid }}<br>
         Who? {{ who }}
         <p></p>
-
-        <!-- Submit -->
-        <input type="submit" ng-disabled="form.customForm.$invalid" value="Submit"></input>
     </form>
     
     <script type="text/javascript-lazy" >
