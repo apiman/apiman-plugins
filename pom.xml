@@ -72,8 +72,8 @@
     <!-- Instruct the build to use only UTF-8 encoding for source code -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
-
     <version.apiman>1.2.9.Final</version.apiman>
+    <version.apiman>1.2.10-SNAPSHOT</version.apiman>
     <version.javadoc.plugin>2.10.1</version.javadoc.plugin>
     <version.compiler.plugin>3.2</version.compiler.plugin>
     <version.enforcer.plugin>1.4</version.enforcer.plugin>
@@ -256,6 +256,7 @@
     <module>unique-header-policy</module>
     <module>url-whitelist-policy</module>
     <module>repository</module>
+    <module>auth-3scale</module>
   </modules>
 
   <profiles>
