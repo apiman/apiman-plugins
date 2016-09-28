@@ -17,30 +17,34 @@ import io.apiman.gateway.engine.policy.IPolicyContext;
 public abstract class AuthRepExecutor {
 
     protected static final String DEFAULT_BACKEND = "https://su1.3scale.net:443";
+    protected static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
+    protected static final String REPORT_PATH = "/transactions.xml?";
+    protected static final String AUTHREP_PATH = "/transactions/authrep.xml?";
+    
     protected final ApiRequest request;
+	protected final ApiResponse response;
     protected final IHttpClientComponent httpClient;
     protected final IPolicyFailureFactoryComponent failureFactory;
     protected final QueryMap queryMap;
     protected final Api api;
-    protected IAsyncHandler<PolicyFailure> policyFailureHandler;
-	private final ApiResponse response;
     
-    public AuthRepExecutor(ApiResponse response, Api api, IPolicyContext context) {
+    protected IAsyncHandler<PolicyFailure> policyFailureHandler;
+	
+	private AuthRepExecutor(ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
+        this.request = request;
         this.response = response;
-        this.request = null;
         this.api = api;
         this.httpClient = context.getComponent(IHttpClientComponent.class);
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
         this.queryMap = new QueryMap();
+	}
+    
+    public AuthRepExecutor(ApiResponse response, Api api, IPolicyContext context) {
+    	this(null, response, api, context);
     }
 
     public AuthRepExecutor(ApiRequest request, IPolicyContext context) {
-        this.request = request;
-        this.response = null;
-        this.api = request.getApi();
-        this.httpClient = context.getComponent(IHttpClientComponent.class);
-        this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
-        this.queryMap = new QueryMap();
+    	this(request, null, request.getApi(), context);
     }
 
     public abstract void auth(IAsyncResultHandler<Void> handler);

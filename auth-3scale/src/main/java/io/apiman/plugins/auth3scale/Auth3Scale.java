@@ -15,6 +15,7 @@
  */
 package io.apiman.plugins.auth3scale;
 
+import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policies.AbstractMappedPolicy;
@@ -31,6 +32,8 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     protected Class<Auth3ScaleBean> getConfigurationClass() {
         return Auth3ScaleBean.class;
     }
+    
+    private static final String AUTH3SCALE_ATTRIBUTE_MAP_KEY = Auth3Scale.class.getCanonicalName() + "-API";
 
     protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {
         // Get HTTP Client TODO compare perf with singleton
@@ -41,8 +44,10 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
         auth.setPolicyFailureHandler(chain::doFailure);
 
         // If succeeds, or exception.
-        auth.execute(result -> {
+        auth.auth(result -> {
             if (result.isSuccess()) {
+            	// Keep the API request around so the auth key(s) can be accessed, etc.
+            	context.setAttribute(AUTH3SCALE_ATTRIBUTE_MAP_KEY, request.getApi());
                 chain.doApply(request);
             } else {
                 chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
@@ -51,6 +56,17 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     }
 
     protected void doApply(ApiResponse response, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiResponse> chain) {
-        chain.doApply(response);
+    	Api api = context.getAttribute(AUTH3SCALE_ATTRIBUTE_MAP_KEY, null);
+        AuthRepBuilder rep = new AuthRepBuilder(response, api, context);
+        
+        rep.setPolicyFailureHandler(chain::doFailure);
+        
+        rep.rep(result -> {
+            if (result.isSuccess()) {
+                chain.doApply(response);
+            } else {
+                chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
+            }
+        });
     }
 }

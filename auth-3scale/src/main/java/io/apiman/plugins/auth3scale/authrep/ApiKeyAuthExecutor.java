@@ -1,16 +1,17 @@
 package io.apiman.plugins.auth3scale.authrep;
 
-import org.omg.PortableInterceptor.PolicyFactory;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
+import io.apiman.common.logging.IApimanLogger;
 import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
+import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.beans.PolicyFailure;
 import io.apiman.gateway.engine.beans.PolicyFailureType;
 import io.apiman.gateway.engine.beans.util.QueryMap;
-import io.apiman.gateway.engine.components.IHttpClientComponent;
-import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.components.http.HttpMethod;
 import io.apiman.gateway.engine.components.http.IHttpClientRequest;
 import io.apiman.gateway.engine.components.http.IHttpClientResponse;
@@ -32,13 +33,17 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     private static final AsyncResultImpl<Void> OK_RESPONSE = AsyncResultImpl.create((Void) null);
     // TODO Can't remember the place where we put the special exceptions for this... 
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user key provided!"));
-
+    private final IApimanLogger logger;
+    
+    
     ApiKeyAuthExecutor(ApiRequest request, IPolicyContext context) {
-        super(request, context);
+    	super(request, context);
+    	logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
     
-    ApiKeyAuthExecutor(ApiRequest response, IPolicyContext context) {
-        super(response, context);
+    ApiKeyAuthExecutor(ApiResponse response, Api api, IPolicyContext context) {
+    	super(response, api, context);
+    	logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
     
     private QueryMap setIfNotNull(QueryMap in, String k, String v) {
@@ -55,9 +60,9 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
         	handler.handle(FAIL_PROVIDE_USER_KEY);
         	return;
         }
-    	queryMap.put(AuthRepConstants.USER_KEY, userKey);
     	
         // Auth elems
+    	queryMap.put(AuthRepConstants.USER_KEY, userKey);
         queryMap.put(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
         queryMap.put(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
         
@@ -65,22 +70,15 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     	setIfNotNull(queryMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
     	
     	// TODO can also do predicted usage, if we see value in that..?
-    	
-    	System.out.println(DEFAULT_BACKEND + "/transactions/authorize.xml?" + queryMap.toQueryString());
-
         // Switch between oauth, key, and id+key when added
-        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + "/transactions/authorize.xml?" + queryMap.toQueryString(), 
+        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + queryMap.toQueryString(), 
         		HttpMethod.GET, result -> {
             if (result.isSuccess()) {
                 System.err.println("Successfully connected to backend");
                 
                 IHttpClientResponse response = result.getResult();
                 PolicyFailure policyFailure = null;
-                
-//                System.err.println(response.getResponseCode());
-//                System.err.println(response.getResponseMessage());
-//                System.err.println(response.getBody());
-                
+
                 switch (response.getResponseCode()) {
                     case 200:
                         System.out.println("3scale backend was happy");
@@ -121,28 +119,25 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
         get.end();
     }
 
-    private String getUserKey() {
-        if (api.getUserKeyLocation() == Api.UserKeyLocationEnum.HEADER) {
-            return request.getHeaders().get(api.getUserKeyField());
-        } else { // else UserKeyLocationEnum.QUERY
-            return request.getQueryParams().get(api.getUserKeyField());
-        }
-    }
-
-    public static void main(String... args) {
-        QueryMap qm = new QueryMap();
-        qm.put(AuthRepConstants.USER_KEY, "123user-key123");
-        qm.put(AuthRepConstants.SERVICE_ID, Long.toString(1234456l));
-
-        System.out.println(DEFAULT_BACKEND + "/transactions/authrep.xml?" + qm.toQueryString());
-    }
-
+    // Rep seems to require POST with URLEncoding 
 	@Override
 	public void rep(IAsyncResultHandler<Void> handler) {
+        // Auth elems
+    	queryMap.put(AuthRepConstants.USER_KEY, getUserKey());
+        queryMap.put(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
+        queryMap.put(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
+		
         // Metrics
         
         // Usage
 		
+		// Report
+		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH + queryMap.toQueryString(), 
+        		HttpMethod.POST, result -> {
+        			
+        		});
+		
+		//post.write(data); TODO HERE
 	}
 
 	@Override
@@ -150,4 +145,24 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
 		// TODO Auto-generated method stub
 		
 	}
+
+    private String getUserKey() {
+        if (api.getUserKeyLocation() == Api.UserKeyLocationEnum.HEADER) {
+            return request.getHeaders().get(api.getUserKeyField());
+        } else { // else UserKeyLocationEnum.QUERY
+            return request.getQueryParams().get(api.getUserKeyField());
+        }
+    }
+    
+    public static void main(String... args) throws Exception {
+    	URLEncoder.encode("abc", "UTF-8");
+    }
+
+//    public static void main(String... args) {
+//        QueryMap qm = new QueryMap();
+//        qm.put(AuthRepConstants.USER_KEY, "123user-key123");
+//        qm.put(AuthRepConstants.SERVICE_ID, Long.toString(1234456l));
+//
+//        System.out.println(DEFAULT_BACKEND + AUTHREP_PATH + qm.toQueryString());
+//    }
 }

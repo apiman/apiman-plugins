@@ -2,6 +2,7 @@ package io.apiman.plugins.auth3scale.authrep;
 
 import io.apiman.gateway.engine.async.IAsyncHandler;
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
+import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.beans.PolicyFailure;
@@ -36,13 +37,21 @@ public class AuthRepBuilder { // factory, really?
         authRepExecutorDelegate = new ApiKeyAuthExecutor(request, context);
     }
     
-    public AuthRepBuilder(ApiResponse response, IPolicyContext context) {
+    public AuthRepBuilder(ApiResponse response, Api api, IPolicyContext context) {
         // Let's imagine there's some switching code here for oauth2 vs user_key vs id+user_key
-        authRepExecutorDelegate = new ApiKeyAuthExecutor(response, context);
+        authRepExecutorDelegate = new ApiKeyAuthExecutor(response, api, context);
     }
 
-    public void execute(IAsyncResultHandler<Void> handler) {
+    public void auth(IAsyncResultHandler<Void> handler) {
         authRepExecutorDelegate.auth(handler);
+    }
+    
+    public void rep(IAsyncResultHandler<Void> handler) {
+        authRepExecutorDelegate.rep(handler);
+    }
+    
+    public void authrep(IAsyncResultHandler<Void> handler) {
+        authRepExecutorDelegate.authrep(handler);
     }
 
     public void setPolicyFailureHandler(IAsyncHandler<PolicyFailure> pfh) {
