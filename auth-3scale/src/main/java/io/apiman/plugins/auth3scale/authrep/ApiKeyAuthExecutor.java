@@ -17,6 +17,8 @@ import io.apiman.gateway.engine.components.http.IHttpClientRequest;
 import io.apiman.gateway.engine.components.http.IHttpClientResponse;
 import io.apiman.gateway.engine.policies.PolicyFailureCodes;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.plugins.auth3scale.util.ParameterMap;
+import io.apiman.plugins.auth3scale.util.UsageReport;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
@@ -28,7 +30,8 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
 //    protected final Api api;
 //    protected final IHttpClientComponent httpClient;
 //    protected final IPolicyFailureFactoryComponent failureFactory;
-//    protected final QueryMap queryMap;
+//    protected final ParamterMap queryMap;
+	;
 
     private static final AsyncResultImpl<Void> OK_RESPONSE = AsyncResultImpl.create((Void) null);
     // TODO Can't remember the place where we put the special exceptions for this... 
@@ -46,11 +49,12 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     	logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
     
-    private QueryMap setIfNotNull(QueryMap in, String k, String v) {
+    private ParameterMap setIfNotNull(ParameterMap in, String k, String v) {
     	if (v == null)
     		return in;
     	
-    	return (QueryMap) in.add(k, v);
+    	in.add(k, v);
+    	return in;
     }
 
     @Override
@@ -62,16 +66,16 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
         }
     	
         // Auth elems
-    	queryMap.put(AuthRepConstants.USER_KEY, userKey);
-        queryMap.put(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
-        queryMap.put(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
+    	paramMap.add(AuthRepConstants.USER_KEY, userKey);
+    	paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
+    	paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
         
-    	setIfNotNull(queryMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
-    	setIfNotNull(queryMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
+    	setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
+    	setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
     	
     	// TODO can also do predicted usage, if we see value in that..?
         // Switch between oauth, key, and id+key when added
-        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + queryMap.toQueryString(), 
+        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(), 
         		HttpMethod.GET, result -> {
             if (result.isSuccess()) {
                 System.err.println("Successfully connected to backend");
@@ -118,26 +122,44 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
         get.addHeader("X-3scale-User-Client", "apiman");
         get.end();
     }
+    
+    public void rep(UsageReport[] reports, IAsyncResultHandler<Void> handler) {
+    	// Batched reports? How does this work, precisely.
+    }
 
     // Rep seems to require POST with URLEncoding 
 	@Override
 	public void rep(IAsyncResultHandler<Void> handler) {
         // Auth elems
-    	queryMap.put(AuthRepConstants.USER_KEY, getUserKey());
-        queryMap.put(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
-        queryMap.put(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
+		paramMap.add(AuthRepConstants.USER_KEY, getUserKey());
+    	paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
+    	paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
 		
         // Metrics
+    	
         
         // Usage
+    	
 		
 		// Report
-		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH + queryMap.toQueryString(), 
+		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH, 
         		HttpMethod.POST, result -> {
-        			
+        			if (result.isSuccess()) {
+        				IHttpClientResponse postResponse = result.getResult();
+        				if (postResponse.getResponseCode() == 200 || postResponse.getResponseCode() == 202) {
+        					parseResult(postResponse.getBody(), handler);
+        				} else {
+        					logger.warn("non-200 response on rep " + postResponse.getResponseCode());
+        				}
+        			}
         		});
 		
-		//post.write(data); TODO HERE
+		post.addHeader("Content-Type", "application/x-www-form-urlencoded");
+		post.write(paramMap.encode(), "UTF-8");
+	}
+
+	private void parseResult(String body, IAsyncResultHandler<Void> handler) {
+		
 	}
 
 	@Override

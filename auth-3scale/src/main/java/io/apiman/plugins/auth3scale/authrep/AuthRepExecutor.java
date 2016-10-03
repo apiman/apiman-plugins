@@ -6,10 +6,10 @@ import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.beans.PolicyFailure;
-import io.apiman.gateway.engine.beans.util.QueryMap;
 import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.plugins.auth3scale.util.ParameterMap;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
@@ -25,7 +25,7 @@ public abstract class AuthRepExecutor {
 	protected final ApiResponse response;
     protected final IHttpClientComponent httpClient;
     protected final IPolicyFailureFactoryComponent failureFactory;
-    protected final QueryMap queryMap;
+    protected final ParameterMap paramMap;
     protected final Api api;
     
     protected IAsyncHandler<PolicyFailure> policyFailureHandler;
@@ -36,7 +36,7 @@ public abstract class AuthRepExecutor {
         this.api = api;
         this.httpClient = context.getComponent(IHttpClientComponent.class);
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
-        this.queryMap = new QueryMap();
+        this.paramMap = new ParameterMap();
 	}
     
     public AuthRepExecutor(ApiResponse response, Api api, IPolicyContext context) {

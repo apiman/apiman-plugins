@@ -33,7 +33,7 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
         return Auth3ScaleBean.class;
     }
     
-    private static final String AUTH3SCALE_ATTRIBUTE_MAP_KEY = Auth3Scale.class.getCanonicalName() + "-API";
+    private static final String AUTH3SCALE_API = Auth3Scale.class.getCanonicalName() + "-API";
 
     protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {
         // Get HTTP Client TODO compare perf with singleton
@@ -47,7 +47,7 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
         auth.auth(result -> {
             if (result.isSuccess()) {
             	// Keep the API request around so the auth key(s) can be accessed, etc.
-            	context.setAttribute(AUTH3SCALE_ATTRIBUTE_MAP_KEY, request.getApi());
+            	context.setAttribute(AUTH3SCALE_API, request.getApi());
                 chain.doApply(request);
             } else {
                 chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
@@ -56,7 +56,7 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     }
 
     protected void doApply(ApiResponse response, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiResponse> chain) {
-    	Api api = context.getAttribute(AUTH3SCALE_ATTRIBUTE_MAP_KEY, null);
+    	Api api = context.getAttribute(AUTH3SCALE_API, null);
         AuthRepBuilder rep = new AuthRepBuilder(response, api, context);
         
         rep.setPolicyFailureHandler(chain::doFailure);
