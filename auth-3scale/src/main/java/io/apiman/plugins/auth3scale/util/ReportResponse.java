@@ -29,7 +29,7 @@
 //        }
 //    }
 //
-//    private void parseResponse(HttpResponse response) throws Server123 {
+//    private void parseResponse(HttpResponse response) throws ServerError {
 //        try {
 //            Builder parser = new Builder();
 //            Document doc = parser.build(response.getBody(), null);

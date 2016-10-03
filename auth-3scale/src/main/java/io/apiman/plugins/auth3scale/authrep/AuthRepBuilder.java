@@ -7,6 +7,7 @@ import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.beans.PolicyFailure;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.plugins.auth3scale.authrep.executors.ApiKeyAuthExecutor;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}

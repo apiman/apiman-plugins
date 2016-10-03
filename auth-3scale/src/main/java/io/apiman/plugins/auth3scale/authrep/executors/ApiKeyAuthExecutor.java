@@ -1,6 +1,5 @@
-package io.apiman.plugins.auth3scale.authrep;
+package io.apiman.plugins.auth3scale.authrep.executors;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import io.apiman.common.logging.IApimanLogger;
@@ -11,13 +10,15 @@ import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.beans.PolicyFailure;
 import io.apiman.gateway.engine.beans.PolicyFailureType;
-import io.apiman.gateway.engine.beans.util.QueryMap;
 import io.apiman.gateway.engine.components.http.HttpMethod;
 import io.apiman.gateway.engine.components.http.IHttpClientRequest;
 import io.apiman.gateway.engine.components.http.IHttpClientResponse;
 import io.apiman.gateway.engine.policies.PolicyFailureCodes;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
+import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
+import io.apiman.plugins.auth3scale.util.ReportResponseHandler;
 import io.apiman.plugins.auth3scale.util.UsageReport;
 
 /**
@@ -31,7 +32,6 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
 //    protected final IHttpClientComponent httpClient;
 //    protected final IPolicyFailureFactoryComponent failureFactory;
 //    protected final ParamterMap queryMap;
-	;
 
     private static final AsyncResultImpl<Void> OK_RESPONSE = AsyncResultImpl.create((Void) null);
     // TODO Can't remember the place where we put the special exceptions for this... 
@@ -143,23 +143,10 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
 		
 		// Report
 		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH, 
-        		HttpMethod.POST, result -> {
-        			if (result.isSuccess()) {
-        				IHttpClientResponse postResponse = result.getResult();
-        				if (postResponse.getResponseCode() == 200 || postResponse.getResponseCode() == 202) {
-        					parseResult(postResponse.getBody(), handler);
-        				} else {
-        					logger.warn("non-200 response on rep " + postResponse.getResponseCode());
-        				}
-        			}
-        		});
+        		HttpMethod.POST, new ReportResponseHandler(handler));
 		
 		post.addHeader("Content-Type", "application/x-www-form-urlencoded");
 		post.write(paramMap.encode(), "UTF-8");
-	}
-
-	private void parseResult(String body, IAsyncResultHandler<Void> handler) {
-		
 	}
 
 	@Override
