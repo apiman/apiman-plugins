@@ -1,4 +1,4 @@
-package io.apiman.plugins.auth3scale.util;
+package io.apiman.plugins.auth3scale.util.report;
 
 import java.io.IOException;
 import java.io.StringReader;

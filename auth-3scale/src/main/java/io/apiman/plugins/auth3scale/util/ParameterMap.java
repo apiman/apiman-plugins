@@ -57,6 +57,10 @@ public class ParameterMap {
     public void add(String key, String value) {
         data.put(key, value);
     }
+    
+    public void addUsage(ParameterMap usage) {
+    	data.put("usage", usage);
+    }
 
     /**
      * Add another ParameterMap

@@ -1,25 +1,20 @@
 package io.apiman.plugins.auth3scale.authrep.executors;
 
-import java.net.URLEncoder;
-
 import io.apiman.common.logging.IApimanLogger;
 import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
-import io.apiman.gateway.engine.beans.PolicyFailure;
-import io.apiman.gateway.engine.beans.PolicyFailureType;
 import io.apiman.gateway.engine.components.http.HttpMethod;
 import io.apiman.gateway.engine.components.http.IHttpClientRequest;
-import io.apiman.gateway.engine.components.http.IHttpClientResponse;
-import io.apiman.gateway.engine.policies.PolicyFailureCodes;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
-import io.apiman.plugins.auth3scale.util.ReportResponseHandler;
 import io.apiman.plugins.auth3scale.util.UsageReport;
+import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
+import io.apiman.plugins.auth3scale.util.report.ReportResponseHandler;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
@@ -33,18 +28,17 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
 //    protected final IPolicyFailureFactoryComponent failureFactory;
 //    protected final ParamterMap queryMap;
 
-    private static final AsyncResultImpl<Void> OK_RESPONSE = AsyncResultImpl.create((Void) null);
     // TODO Can't remember the place where we put the special exceptions for this... 
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user key provided!"));
-    private final IApimanLogger logger;
+    @SuppressWarnings("unused")
+	private final IApimanLogger logger;
     
-    
-    ApiKeyAuthExecutor(ApiRequest request, IPolicyContext context) {
+    public ApiKeyAuthExecutor(ApiRequest request, IPolicyContext context) {
     	super(request, context);
     	logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
     
-    ApiKeyAuthExecutor(ApiResponse response, Api api, IPolicyContext context) {
+    public ApiKeyAuthExecutor(ApiResponse response, Api api, IPolicyContext context) {
     	super(response, api, context);
     	logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
@@ -58,10 +52,10 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     }
 
     @Override
-    public void auth(IAsyncResultHandler<Void> handler) {
+    public void auth(IAsyncResultHandler<Void> resultHandler) {
         String userKey = getUserKey();
         if (userKey == null) {
-        	handler.handle(FAIL_PROVIDE_USER_KEY);
+        	resultHandler.handle(FAIL_PROVIDE_USER_KEY);
         	return;
         }
     	
@@ -76,45 +70,8 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     	// TODO can also do predicted usage, if we see value in that..?
         // Switch between oauth, key, and id+key when added
         IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(), 
-        		HttpMethod.GET, result -> {
-            if (result.isSuccess()) {
-                System.err.println("Successfully connected to backend");
-                
-                IHttpClientResponse response = result.getResult();
-                PolicyFailure policyFailure = null;
-
-                switch (response.getResponseCode()) {
-                    case 200:
-                        System.out.println("3scale backend was happy");
-                        System.out.println(response.getBody());
-                        handler.handle(OK_RESPONSE);
-                        break;
-                    case 403:
-                        // May be able to treat all error cases without distinction by using parsed response, maybe?
-                    	policyFailure = failureFactory.createFailure(PolicyFailureType.Authentication, 
-                    			PolicyFailureCodes.BASIC_AUTH_FAILED, 
-                    			response.getResponseMessage());
-                        break;
-                    case 409:  // Possibly over limit
-                    	policyFailure = failureFactory.createFailure(PolicyFailureType.Other, 
-                    			PolicyFailureCodes.RATE_LIMIT_EXCEEDED, 
-                    			response.getResponseMessage());
-                        break;
-                    default:
-                        System.err.println("Unexpected or undocumented response code"); // TODO catchall. policy failure or exception?
-                        break;
-                }
-                
-                if (policyFailure != null)
-                	policyFailureHandler.handle(policyFailure);
-                
-                response.close();
-            } else {
-                System.err.println("HTTP request failed ...");
-                result.getError().printStackTrace();
-                handler.handle(AsyncResultImpl.create(result.getError()));
-            }
-        });
+        		HttpMethod.GET, 
+        		new AuthResponseHandler(resultHandler, policyFailureHandler, failureFactory));
         
         get.setConnectTimeout(1000);
         get.setReadTimeout(1000);
@@ -124,7 +81,7 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     }
     
     public void rep(UsageReport[] reports, IAsyncResultHandler<Void> handler) {
-    	// Batched reports? How does this work, precisely.
+    	// Batched reports? How does this work, precisely?
     }
 
     // Rep seems to require POST with URLEncoding 
@@ -135,18 +92,21 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     	paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
     	paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
 		
-        // Metrics
+        // Metrics / Usage
+    	paramMap.addUsage(buildMetrics(api));
     	
-        
-        // Usage
-    	
-		
 		// Report
 		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH, 
-        		HttpMethod.POST, new ReportResponseHandler(handler));
+        		HttpMethod.POST, 
+        		new ReportResponseHandler(handler));
 		
 		post.addHeader("Content-Type", "application/x-www-form-urlencoded");
 		post.write(paramMap.encode(), "UTF-8");
+	}
+
+	private ParameterMap buildMetrics(Api api) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -162,16 +122,4 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
             return request.getQueryParams().get(api.getUserKeyField());
         }
     }
-    
-    public static void main(String... args) throws Exception {
-    	URLEncoder.encode("abc", "UTF-8");
-    }
-
-//    public static void main(String... args) {
-//        QueryMap qm = new QueryMap();
-//        qm.put(AuthRepConstants.USER_KEY, "123user-key123");
-//        qm.put(AuthRepConstants.SERVICE_ID, Long.toString(1234456l));
-//
-//        System.out.println(DEFAULT_BACKEND + AUTHREP_PATH + qm.toQueryString());
-//    }
 }
