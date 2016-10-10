@@ -16,9 +16,9 @@ import io.apiman.plugins.auth3scale.util.ParameterMap;
  */
 public abstract class AuthRepExecutor {
 
-    protected static final String DEFAULT_BACKEND = "https://su1.3scale.net:443";
+    protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
     protected static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
-    protected static final String REPORT_PATH = "/transactions.xml?";
+    protected static final String REPORT_PATH = "/transactions.xml";
     protected static final String AUTHREP_PATH = "/transactions/authrep.xml?";
     
     protected final ApiRequest request;
@@ -29,6 +29,7 @@ public abstract class AuthRepExecutor {
     protected final Api api;
     
     protected IAsyncHandler<PolicyFailure> policyFailureHandler;
+	protected IPolicyContext context;
 	
 	private AuthRepExecutor(ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
         this.request = request;
@@ -36,11 +37,12 @@ public abstract class AuthRepExecutor {
         this.api = api;
         this.httpClient = context.getComponent(IHttpClientComponent.class);
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
+        this.context = context;
         this.paramMap = new ParameterMap();
 	}
     
-    public AuthRepExecutor(ApiResponse response, Api api, IPolicyContext context) {
-    	this(null, response, api, context);
+    public AuthRepExecutor(ApiRequest request, ApiResponse response, IPolicyContext context) {
+    	this(request, response, request.getApi(), context);
     }
 
     public AuthRepExecutor(ApiRequest request, IPolicyContext context) {

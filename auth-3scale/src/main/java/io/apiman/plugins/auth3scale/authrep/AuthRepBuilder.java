@@ -38,9 +38,9 @@ public class AuthRepBuilder { // factory, really?
         authRepExecutorDelegate = new ApiKeyAuthExecutor(request, context);
     }
     
-    public AuthRepBuilder(ApiResponse response, Api api, IPolicyContext context) {
+    public AuthRepBuilder(ApiResponse response, ApiRequest request, IPolicyContext context) {
         // Let's imagine there's some switching code here for oauth2 vs user_key vs id+user_key
-        authRepExecutorDelegate = new ApiKeyAuthExecutor(response, api, context);
+        authRepExecutorDelegate = new ApiKeyAuthExecutor(response, request, context);
     }
 
     public void auth(IAsyncResultHandler<Void> handler) {

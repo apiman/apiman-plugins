@@ -1,5 +1,6 @@
 package io.apiman.plugins.auth3scale.util;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -108,6 +109,9 @@ public class ParameterMap {
         if (clazz == ParameterMap.class) {
             return ParameterMapType.MAP;
         }
+        if (clazz == Long.class) {
+            return ParameterMapType.LONG;
+        }
         throw new RuntimeException("Unknown object in parameters");
     }
 
@@ -118,7 +122,17 @@ public class ParameterMap {
      * @return
      */
     public String getStringValue(String key) {
-        return (String) data.get(key);
+    	switch (getType(key)) {
+		case ARRAY:
+			return Arrays.toString((ParameterMap[]) data.get(key));
+		case LONG:
+			return Long.toString((Long) data.get(key));
+		case MAP:
+			return ((ParameterMap) data.get(key)).toString(); //
+		case STRING:
+	        return (String) data.get(key);
+    	}
+		return null;
     }
 
     /**
@@ -140,6 +154,14 @@ public class ParameterMap {
     public ParameterMap[] getArrayValue(String key) {
         return (ParameterMap[]) data.get(key);
     }
+    
+    public long getLongValue(String key) {
+    	return (long) data.get(key);
+    }
+    
+    public void setLongValue(String key, long value) {
+    	data.put(key, value);
+    }
 
     /**
      * Return the number of elements in the map.
@@ -153,4 +175,10 @@ public class ParameterMap {
     public String encode() {
     	return encoder.encode(this);
     }
+    
+    public boolean containsKey(String key) {
+    	return data.containsKey(key);
+    }
+    
+    
 }

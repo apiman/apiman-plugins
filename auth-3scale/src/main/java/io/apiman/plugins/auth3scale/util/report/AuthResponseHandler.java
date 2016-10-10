@@ -61,7 +61,7 @@ public class AuthResponseHandler implements IAsyncResultHandler<IHttpClientRespo
             response.close();
         } else {
             System.err.println("HTTP request failed ...");
-            result.getError().printStackTrace();
+            result.getError().printStackTrace(); // TODO, there's actually no point in returning this to the user, is there.
             resultHandler.handle(AsyncResultImpl.create(result.getError()));
         }
     }
