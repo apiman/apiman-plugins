@@ -22,6 +22,7 @@ import io.apiman.gateway.engine.policy.IPolicyChain;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.AuthRepBuilder;
 import io.apiman.plugins.auth3scale.beans.Auth3ScaleBean;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
@@ -33,9 +34,8 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     }
     
     private static final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ";
+    private final BatchedReporter BATCHED_REPORTER = new BatchedReporter(null);
     
-    //private static final 
-
     protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {
         // Get HTTP Client TODO compare perf with singleton
         // TODO take this from services.backend.endpoint
