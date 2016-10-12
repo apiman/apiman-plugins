@@ -18,13 +18,13 @@ import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.components.http.IHttpClientResponse;
 
 public class ReportResponseHandler implements IAsyncResultHandler<IHttpClientResponse> {
-	private final static IAsyncResult<Void> RESULT_OK = AsyncResultImpl.create((Void) null);
+	private final static IAsyncResult<ReportResponse> RESULT_OK = AsyncResultImpl.create(new SuccessfulReportResponse());
 	private final static SAXParserFactory factory = SAXParserFactory.newInstance();
 	
-	private final IAsyncResultHandler<Void> errorHandler;
+	private final IAsyncResultHandler<ReportResponse> resultHandler;
 
-	public ReportResponseHandler(IAsyncResultHandler<Void> errorHandler) {
-		this.errorHandler = errorHandler;
+	public ReportResponseHandler(IAsyncResultHandler<ReportResponse> resultHandler) {
+		this.resultHandler = resultHandler;
 	}
 
 	@Override
@@ -32,16 +32,17 @@ public class ReportResponseHandler implements IAsyncResultHandler<IHttpClientRes
 		if (result.isSuccess()) {
 			IHttpClientResponse postResponse = result.getResult();
 			if (postResponse.getResponseCode() == 200 || postResponse.getResponseCode() == 202) {
-				errorHandler.handle(RESULT_OK);
+				resultHandler.handle(RESULT_OK);
 			} else {
 				try {
+//					ReportResponse reportResponse = parseReport(postResponse.getBody());
+//					RuntimeException re = new RuntimeException(String.format("Backend report failed. Code: %s, Message: %s",
+//							reportResponse.getErrorCode(), reportResponse.getErrorMessage()));
 					ReportResponse reportResponse = parseReport(postResponse.getBody());
-					RuntimeException re = new RuntimeException(String.format("Backend report failed. Code: %s, Message: %s",
-							reportResponse.getErrorCode(), reportResponse.getErrorMessage()));
-					errorHandler.handle(AsyncResultImpl.create(re));
+					resultHandler.handle(AsyncResultImpl.create(reportResponse));
 				} catch (Exception e) {
-					RuntimeException re = new RuntimeException("Unable to parse report response", e);
-					errorHandler.handle(AsyncResultImpl.create(re));
+					RuntimeException re = new RuntimeException("Unable to parse report response", e); // TODO more specific
+					resultHandler.handle(AsyncResultImpl.create(re));
 				}				
 			}
 		}
@@ -58,9 +59,28 @@ public class ReportResponseHandler implements IAsyncResultHandler<IHttpClientRes
 		}
 	}
 	
-	private interface ReportResponse {
+	public static interface ReportResponse {
+		boolean success();
+		// boolean unauthorized?
 		String getErrorCode();
 		String getErrorMessage();
+	}
+	
+	private static final class SuccessfulReportResponse implements ReportResponse {
+		@Override
+		public boolean success() {
+			return true;
+		}
+
+		@Override
+		public String getErrorCode() {
+			return null; // We don't actually care
+		}
+
+		@Override
+		public String getErrorMessage() {
+			return null; // We don't actually care
+		}
 	}
 	
 	private static final class ReturnCodeListener extends DefaultHandler implements ReportResponse {
@@ -76,7 +96,7 @@ public class ReportResponseHandler implements IAsyncResultHandler<IHttpClientRes
 				returnCode = attributes.getValue("code");
 			}
 		}
-				
+
 		@Override
 	    public void characters(char ch[], int start, int length)
 	            throws SAXException {
@@ -96,12 +116,17 @@ public class ReportResponseHandler implements IAsyncResultHandler<IHttpClientRes
 		}
 		
 		public String getErrorMessage() {
-			return errorMessage.toString();
+			return errorMessage;
 		}
 
 		@Override
 		public String toString() {
 			return "ReturnCodeListener [returnCode=" + returnCode + ", errorMessage=" + errorMessage + "]";
+		}
+
+		@Override
+		public boolean success() {
+			return false;
 		}
 
 	}

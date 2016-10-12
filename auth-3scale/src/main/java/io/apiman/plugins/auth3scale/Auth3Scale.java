@@ -20,7 +20,8 @@ import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policies.AbstractMappedPolicy;
 import io.apiman.gateway.engine.policy.IPolicyChain;
 import io.apiman.gateway.engine.policy.IPolicyContext;
-import io.apiman.plugins.auth3scale.authrep.AuthRepBuilder;
+import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
+import io.apiman.plugins.auth3scale.authrep.AuthRepFactory;
 import io.apiman.plugins.auth3scale.beans.Auth3ScaleBean;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
@@ -33,27 +34,26 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
         return Auth3ScaleBean.class;
     }
     
-    private static final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ";
-    private final BatchedReporter BATCHED_REPORTER = new BatchedReporter(null);
+    private static final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ"; 
+    
+    // effectively static anyway
+    private final BatchedReporter batchedReporter = new BatchedReporter();
+    private final AuthRepFactory authRepFactory = new AuthRepFactory(batchedReporter);
     
     protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {
-        // Get HTTP Client TODO compare perf with singleton
-        // TODO take this from services.backend.endpoint
-        AuthRepBuilder auth = new AuthRepBuilder(request, context);
-
-        // If a policy failure occurs, call chain.doFailure
-        auth.setPolicyFailureHandler(chain::doFailure);
-
-        // If succeeds, or exception.
-        auth.auth(result -> {
-            if (result.isSuccess()) {
-            	// Keep the API request around so the auth key(s) can be accessed, etc.
-            	context.setAttribute(AUTH3SCALE_REQUEST, request);
-                chain.doApply(request);
-            } else {
-                chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
-            }
-        });
+    	// Get HTTP Client TODO compare perf with singleton
+    	// TODO take this from services.backend.endpoint
+    	AuthRepExecutor auth = authRepFactory.createAuth(request, context)
+    			.setPolicyFailureHandler(chain::doFailure)         // If a policy failure occurs, call chain.doFailure
+    			.auth(result -> {         // If succeeds, or exception.
+    				if (result.isSuccess()) {
+    					// Keep the API request around so the auth key(s) can be accessed, etc.
+    					context.setAttribute(AUTH3SCALE_REQUEST, request);
+    					chain.doApply(request);
+    				} else {
+    					chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
+    				}
+    			});
     }
 
     protected void doApply(ApiResponse response, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiResponse> chain) {
@@ -61,18 +61,8 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     	chain.doApply(response);
     	
     	ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
-        AuthRepBuilder rep = new AuthRepBuilder(response, request, context);
+        AuthRepExecutor reportExecutor = authRepFactory.createRep(response, request, context);
         
-        rep.setPolicyFailureHandler(chain::doFailure);
-        
-        rep.rep(result -> {
-            if (result.isSuccess()) {
-                
-            } else {
-                //chain.throwError(result.getError()); // TODO review - likely can't do anything useful at this point!
-            	//retry?
-            	
-            }
-        });
+        reportExecutor.setPolicyFailureHandler(chain::doFailure).rep();
     }
 }

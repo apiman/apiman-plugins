@@ -1,20 +1,35 @@
 package io.apiman.plugins.auth3scale.util.report.batchedreporter;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
+import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPeriodicComponent;
+import io.apiman.gateway.engine.components.http.HttpMethod;
+import io.apiman.gateway.engine.components.http.IHttpClientRequest;
+import io.apiman.plugins.auth3scale.util.report.ReportResponseHandler;
 
 public class BatchedReporter {
 	// Change list to RingBuffer?
-	private HashMap<ReportData.ReportGroupType, List<ReportData>> reports = new LinkedHashMap<>(); // TODO concurrency implications?
+	//private HashMap<AbstractReportGroup.ReportTypeEnum, ReportList> reports = new LinkedHashMap<>(); // TODO concurrency implications?
+	private Set<AbstractReporter<? extends ReportToSend>> reporters = new LinkedHashSet<>();
+	
 	private IPeriodicComponent periodic;
 	private boolean started = false;
+	private volatile boolean sending = false;
+
+	private long timerId;
 	
-	private static final int REPORTING_PERIOD = 5000;
-	private static final int INITIAL_WAIT = 5000;
+	private IHttpClientComponent httpClient;
+	
+	private static final int DEFAULT_REPORTING_INTERVAL = 5000;
+	private static final int DEFAULT_INITIAL_WAIT = 5000;
+	private int reportingInterval = DEFAULT_REPORTING_INTERVAL;
+	
+	Queue<ReportToSend> retryQueue = new ConcurrentLinkedQueue<>();
+	
 	
 	public BatchedReporter() {
 	}
@@ -23,22 +38,54 @@ public class BatchedReporter {
 		return started;
 	}
 	
-	public void start(IPeriodicComponent periodic) {
+	public void addReporter(AbstractReporter<? extends ReportToSend> reporter) {
+		reporter.setFullHandler(isFull -> {
+			send();
+		});
+		
+		reporters.add(reporter);
+	}
+	
+	public void start(IPeriodicComponent periodic, IHttpClientComponent httpClient) {
 		if (started)
 			throw new IllegalStateException("Already started");
-		
+		this.httpClient = httpClient;
 		this.periodic = periodic;
 		this.started = true;
 		
-		periodic.setPeriodicTimer(REPORTING_PERIOD, INITIAL_WAIT, timerId -> {
-			for (List<ReportData> reports : reports.values()) {
-				
-			}
+		this.timerId = periodic.setPeriodicTimer(reportingInterval, DEFAULT_INITIAL_WAIT, id -> {
+			send();
 		});
 	}
 	
-	// TODO Depending on which platform this is run on, could this become thread unsafe?
-	public void report(ReportData report) {
-		reports.get(report.getBatchedReportGroup()).add(report);
+	private void send() {
+		if (!sending) {
+			sending = true;
+			synchronized (this) {
+				if (!sending) {
+					doSend();
+				}
+			}
+		}
 	}
+	
+	// speed up / slow down (back-pressure mechanism?)
+	private void doSend() {
+		for (AbstractReporter<? extends ReportToSend> reporter : reporters) {
+			ReportToSend sendIt = reporter.encode(); // doSend? also need to consider there may be too much left
+			
+			IHttpClientRequest post = httpClient.request(sendIt.endpoint().toString(), // TODO change to broken down components
+					HttpMethod.POST, 
+					new ReportResponseHandler(reportResult -> {
+						// TODO IMPORTANT: invalidate any bad credentials!
+						
+					}));
+			
+			post.addHeader("Content-Type", sendIt.encoding()); // TODO change to contentType
+			System.out.println("Writing the following:" + sendIt.data());
+			post.write(sendIt.data(), "UTF-8");
+			post.end();
+		}
+	}
+//	// TODO Depending on which platform this is run on, could this become thread unsafe?
 }

@@ -14,22 +14,12 @@ import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
-import io.apiman.plugins.auth3scale.util.UsageReport;
 import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
-import io.apiman.plugins.auth3scale.util.report.ReportResponseHandler;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public class ApiKeyAuthExecutor extends AuthRepExecutor {	
-
-//    protected final String BACKEND = "https://su1.3scale.net";
-//    protected final ApiRequest request;
-//    protected final Api api;
-//    protected final IHttpClientComponent httpClient;
-//    protected final IPolicyFailureFactoryComponent failureFactory;
-//    protected final ParamterMap queryMap;
-
     // TODO Can't remember the place where we put the special exceptions for this... 
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user key provided!"));
     private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
@@ -60,7 +50,12 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     }
 
     @Override
-    public void auth(IAsyncResultHandler<Void> resultHandler) {
+    public ApiKeyAuthExecutor auth(IAsyncResultHandler<Void> resultHandler) {
+    	doAuth(resultHandler);
+    	return this;
+    }
+    
+    private void doAuth(IAsyncResultHandler<Void> resultHandler) {
         String userKey = getUserKey();
         if (userKey == null) {
         	resultHandler.handle(FAIL_PROVIDE_USER_KEY);
@@ -92,14 +87,15 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
         get.addHeader("X-3scale-User-Client", "apiman");
         get.end();
     }
-    
-    public void rep(UsageReport[] reports, IAsyncResultHandler<Void> handler) {
-    	// Batched reports? How does this work, precisely?
-    }
 
     // Rep seems to require POST with URLEncoding 
 	@Override
-	public void rep(IAsyncResultHandler<Void> handler) {
+	public ApiKeyAuthExecutor rep() {
+		doRep();
+		return this;
+	}
+	
+	public void doRep() {
         // Auth elems
 		paramMap.add(AuthRepConstants.USER_KEY, getUserKey()); // maybe use endpoint properties or something. or new properties field.
     	paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); 
@@ -111,18 +107,21 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
         // Metrics / Usage
     	paramMap.add("transactions", transactionArray);
     	transactionArray[0].add("usage", buildRepMetrics(api));
+        	
+    	
+    	
     	
 		// Report
-		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH, 
-        		HttpMethod.POST, 
-        		new ReportResponseHandler(handler));
+//		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH, 
+//        		HttpMethod.POST, 
+//        		new ReportResponseHandler(handler));
 
-		post.addHeader("Content-Type", "application/x-www-form-urlencoded");
-		
-		System.out.println("Writing the following:" + paramMap.encode());
-		
-		post.write(paramMap.encode(), "UTF-8");
-		post.end();
+//		post.addHeader("Content-Type", "application/x-www-form-urlencoded");
+//		
+//		System.out.println("Writing the following:" + paramMap.encode());
+//		
+//		post.write(paramMap.encode(), "UTF-8");
+//		post.end();
 	}
 	
 	
@@ -172,11 +171,10 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
 		return pm;
 	}
 	
-	@Override
-	public void authrep(IAsyncResultHandler<Void> handler) {
-		// TODO Auto-generated method stub
-		
-	}
+//	@Override
+//	public ApiKeyAuthExecutor authrep(IAsyncResultHandler<Void> handler) {
+//		throw new UnsupportedOperationException("Only support auth then rep."); //TODO deleteme
+//	}
 
     private String getUserKey() {
     	String userKey = context.getAttribute("user-key", null); // TODO
