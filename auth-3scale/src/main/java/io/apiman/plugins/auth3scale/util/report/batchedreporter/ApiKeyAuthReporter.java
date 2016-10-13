@@ -11,9 +11,8 @@ import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 
 public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
-	// Just temporary
-	Map<Integer, ConcurrentLinkedQueue<ApiKeyReportData>> reports = new ConcurrentHashMap<>();
-	
+	// TODO consider ringbuffer.
+	private final Map<Integer, ConcurrentLinkedQueue<ApiKeyReportData>> reports = new ConcurrentHashMap<>(); // TODO LRU?
 	private static final int DEFAULT_LIST_CAPAC = 800;
 	private static final int FULL_TRIGGER_CAPAC = 500;
 	private static final int MAX_RECORDS = 1000; //
