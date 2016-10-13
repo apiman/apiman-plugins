@@ -11,10 +11,11 @@ public abstract class AbstractReporter<T extends ReportToSend> {
 	//ring buffer?
 	//remember multiple different plugin will be using this same infrastructure - need to be careful
 	public abstract ReportToSend encode();
-	public abstract void addRecord(T record);
+	public abstract AbstractReporter<T> addRecord(T record);
 	
-	protected void setFullHandler(IAsyncHandler<Void> fullHandler) {
+	protected AbstractReporter<T> setFullHandler(IAsyncHandler<Void> fullHandler) {
 		this.fullHandler = fullHandler;
+		return this;
 	}
 	
 	protected void full() {

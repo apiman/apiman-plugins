@@ -10,12 +10,13 @@ import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
-import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public abstract class AuthRepExecutor {
+public abstract class AuthRepExecutor<T extends AbstractReporter<? extends ReportToSend>> {
 
     protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
     protected static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
@@ -31,8 +32,7 @@ public abstract class AuthRepExecutor {
     
     protected IAsyncHandler<PolicyFailure> policyFailureHandler;
 	protected IPolicyContext context;
-	protected BatchedReporter reporter;
-	
+		
 	private AuthRepExecutor(ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
         this.request = request;
         this.response = response;
@@ -51,19 +51,13 @@ public abstract class AuthRepExecutor {
     	this(request, null, request.getApi(), context);
     }
 
-    public abstract AuthRepExecutor auth(IAsyncResultHandler<Void> handler);
+    public abstract AuthRepExecutor<T> auth(IAsyncResultHandler<Void> handler);
+    public abstract AuthRepExecutor<T> rep();
     
-    public abstract AuthRepExecutor rep();
-    
-    //public abstract AuthRepExecutor authrep(IAsyncResultHandler<Void> handler);
-
-    public AuthRepExecutor setPolicyFailureHandler(IAsyncHandler<PolicyFailure> policyFailureHandler) {
+    public AuthRepExecutor<T> setPolicyFailureHandler(IAsyncHandler<PolicyFailure> policyFailureHandler) {
         this.policyFailureHandler = policyFailureHandler;
         return this;
     }
-
-	public AuthRepExecutor setReporter(BatchedReporter reporter) {
-		this.reporter = reporter;
-		return this;
-	}
+    
+    public abstract AuthRepExecutor<T> setReporter(T reporter);
 }

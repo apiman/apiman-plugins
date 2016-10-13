@@ -30,7 +30,6 @@ public class BatchedReporter {
 	
 	Queue<ReportToSend> retryQueue = new ConcurrentLinkedQueue<>();
 	
-	
 	public BatchedReporter() {
 	}
 	
@@ -78,7 +77,7 @@ public class BatchedReporter {
 					HttpMethod.POST, 
 					new ReportResponseHandler(reportResult -> {
 						// TODO IMPORTANT: invalidate any bad credentials!
-						
+						sending = false;
 					}));
 			
 			post.addHeader("Content-Type", sendIt.encoding()); // TODO change to contentType

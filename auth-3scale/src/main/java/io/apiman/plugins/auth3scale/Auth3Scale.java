@@ -43,7 +43,7 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {
     	// Get HTTP Client TODO compare perf with singleton
     	// TODO take this from services.backend.endpoint
-    	AuthRepExecutor auth = authRepFactory.createAuth(request, context)
+    	AuthRepExecutor<?> auth = authRepFactory.createAuth(request, context)
     			.setPolicyFailureHandler(chain::doFailure)         // If a policy failure occurs, call chain.doFailure
     			.auth(result -> {         // If succeeds, or exception.
     				if (result.isSuccess()) {
@@ -61,7 +61,7 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     	chain.doApply(response);
     	
     	ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
-        AuthRepExecutor reportExecutor = authRepFactory.createRep(response, request, context);
+        AuthRepExecutor<?> reportExecutor = authRepFactory.createRep(response, request, context);
         
         reportExecutor.setPolicyFailureHandler(chain::doFailure).rep();
     }

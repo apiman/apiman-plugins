@@ -5,15 +5,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyAuthReportToSend> {
 	// Just temporary
-	Queue<ApiKeyAuthReportToSend> reports = new ConcurrentLinkedQueue<>(); 
+	Queue<ApiKeyAuthReportToSend> reports = new ConcurrentLinkedQueue<>();
 
 	@Override
 	public ReportToSend encode() {
-		
+		return null;
 	}
 
 	@Override
-	public void addRecord(ApiKeyAuthReportToSend record) {
+	public ApiKeyAuthReporter addRecord(ApiKeyAuthReportToSend record) {
 		reports.add(record);
+		return this;
 	}
 }

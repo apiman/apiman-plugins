@@ -15,17 +15,19 @@ import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyAuthReporter;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public class ApiKeyAuthExecutor extends AuthRepExecutor {	
+public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {	
     // TODO Can't remember the place where we put the special exceptions for this... 
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user key provided!"));
     private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
 
     @SuppressWarnings("unused")
 	private final IApimanLogger logger;
+	private ApiKeyAuthReporter reporter;
     
     public ApiKeyAuthExecutor(ApiRequest request, IPolicyContext context) {
     	super(request, context);
@@ -188,6 +190,19 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor {
     	}
     	return userKey;
     }
+
+	@Override
+	public ApiKeyAuthExecutor setReporter(ApiKeyAuthReporter reporter) {
+		this.reporter = reporter;
+		return this;
+	}
+
+//	@Override
+//	public void setReporter(AbstractReporter<? extends ReportToSend> reporter) {
+//		// TODO Auto-generated method stub
+//		
+//	}
+
     
 //    if (api.getUserKeyLocation() == Api.UserKeyLocationEnum.HEADER) {
 //        return request.getHeaders().get(api.getUserKeyField());
