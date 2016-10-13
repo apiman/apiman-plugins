@@ -14,7 +14,7 @@ import io.apiman.plugins.auth3scale.util.report.ReportResponseHandler;
 public class BatchedReporter {
 	// Change list to RingBuffer?
 	//private HashMap<AbstractReportGroup.ReportTypeEnum, ReportList> reports = new LinkedHashMap<>(); // TODO concurrency implications?
-	private Set<AbstractReporter<? extends ReportToSend>> reporters = new LinkedHashSet<>();
+	private Set<AbstractReporter<? extends ReportData>> reporters = new LinkedHashSet<>();
 	
 	private IPeriodicComponent periodic;
 	private boolean started = false;
@@ -37,7 +37,7 @@ public class BatchedReporter {
 		return started;
 	}
 	
-	public void addReporter(AbstractReporter<? extends ReportToSend> reporter) {
+	public void addReporter(AbstractReporter<? extends ReportData> reporter) {
 		reporter.setFullHandler(isFull -> {
 			send();
 		});
@@ -70,19 +70,19 @@ public class BatchedReporter {
 	
 	// speed up / slow down (back-pressure mechanism?)
 	private void doSend() {
-		for (AbstractReporter<? extends ReportToSend> reporter : reporters) {
+		for (AbstractReporter<? extends ReportData> reporter : reporters) {
 			ReportToSend sendIt = reporter.encode(); // doSend? also need to consider there may be too much left
 			
-			IHttpClientRequest post = httpClient.request(sendIt.endpoint().toString(), // TODO change to broken down components
+			IHttpClientRequest post = httpClient.request(sendIt.getEndpoint().toString(), // TODO change to broken down components
 					HttpMethod.POST, 
 					new ReportResponseHandler(reportResult -> {
 						// TODO IMPORTANT: invalidate any bad credentials!
 						sending = false;
 					}));
 			
-			post.addHeader("Content-Type", sendIt.encoding()); // TODO change to contentType
-			System.out.println("Writing the following:" + sendIt.data());
-			post.write(sendIt.data(), "UTF-8");
+			post.addHeader("Content-Type", sendIt.getEncoding()); // TODO change to contentType
+			System.out.println("Writing the following:" + sendIt.getData());
+			post.write(sendIt.getData(), "UTF-8");
 			post.end();
 		}
 	}

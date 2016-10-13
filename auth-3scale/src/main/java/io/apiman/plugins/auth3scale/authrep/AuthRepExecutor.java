@@ -11,12 +11,13 @@ import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public abstract class AuthRepExecutor<T extends AbstractReporter<? extends ReportToSend>> {
+public abstract class AuthRepExecutor<T extends AbstractReporter<? extends ReportData>> {
 
     protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
     protected static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
