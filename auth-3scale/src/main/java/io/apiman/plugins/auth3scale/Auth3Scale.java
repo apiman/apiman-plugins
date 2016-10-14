@@ -15,15 +15,14 @@
  */
 package io.apiman.plugins.auth3scale;
 
-import java.util.Random;
 import java.util.UUID;
 
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
+import io.apiman.gateway.engine.components.ILdapComponent;
 import io.apiman.gateway.engine.policies.AbstractMappedPolicy;
 import io.apiman.gateway.engine.policy.IPolicyChain;
 import io.apiman.gateway.engine.policy.IPolicyContext;
-import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.authrep.AuthRepFactory;
 import io.apiman.plugins.auth3scale.beans.Auth3ScaleBean;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
@@ -32,7 +31,7 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
-
+    
     protected Class<Auth3ScaleBean> getConfigurationClass() {
         return Auth3ScaleBean.class;
     }
@@ -44,8 +43,7 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     private final BatchedReporter batchedReporter = new BatchedReporter();
     private final AuthRepFactory authRepFactory = new AuthRepFactory(batchedReporter);
     
-    protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {
-    	
+    protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {    	
     	System.out.println("UUID = " + random);
     	
     	// Get HTTP Client TODO compare perf with singleton
@@ -61,17 +59,15 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     					chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
     				}
     			});
-    	
-    	//chain.doApply(request);
     }
 
     protected void doApply(ApiResponse response, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiResponse> chain) {
     	// Just let it go ahead, and report stuff at our leisure.
     	chain.doApply(response);
     	
-//    	ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
-//        authRepFactory.createRep(response, request, context)
-//        	.setPolicyFailureHandler(chain::doFailure)
-//        	.rep();
+    	ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
+        authRepFactory.createRep(response, request, context)
+        	.setPolicyFailureHandler(chain::doFailure)
+        	.rep();
     }
 }

@@ -62,37 +62,36 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
     }
     
     private void doAuth(IAsyncResultHandler<Void> resultHandler) {
-    	resultHandler.handle(AsyncResultImpl.create((Void) null));
-//        String userKey = getUserKey();
-//        if (userKey == null) {
-//        	resultHandler.handle(FAIL_PROVIDE_USER_KEY);
-//        	return;
-//        }
-//        
-//        if (!hasRoutes(request)) { // TODO Optimise
-//        	resultHandler.handle(FAIL_NO_ROUTE);
-//        	return;
-//        }
-//    	
-//        // Auth elems
-//    	paramMap.add(AuthRepConstants.USER_KEY, userKey);
-//    	paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
-//    	paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
-//        
-//    	setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
-//    	setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
-//    	
-//    	// TODO can also do predicted usage, if we see value in that..?
-//        // Switch between oauth, key, and id+key when added
-//        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(), 
-//        		HttpMethod.GET, 
-//        		new AuthResponseHandler(resultHandler, policyFailureHandler, failureFactory));
-//        
-//        //get.setConnectTimeout(1000);
-//        //get.setReadTimeout(1000);
-//        get.addHeader("Accept-Charset", "UTF-8");
-//        get.addHeader("X-3scale-User-Client", "apiman");
-//        get.end();
+        String userKey = getUserKey();
+        if (userKey == null) {
+        	resultHandler.handle(FAIL_PROVIDE_USER_KEY);
+        	return;
+        }
+        
+        if (!hasRoutes(request)) { // TODO Optimise
+        	resultHandler.handle(FAIL_NO_ROUTE);
+        	return;
+        }
+    	
+        // Auth elems
+    	paramMap.add(AuthRepConstants.USER_KEY, userKey);
+    	paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
+    	paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
+        
+    	setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
+    	setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
+    	
+    	// TODO can also do predicted usage, if we see value in that..?
+        // Switch between oauth, key, and id+key when added
+        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(), 
+        		HttpMethod.GET, 
+        		new AuthResponseHandler(resultHandler, policyFailureHandler, failureFactory));
+          
+        //get.setConnectTimeout(1000);
+        //get.setReadTimeout(1000);
+        get.addHeader("Accept-Charset", "UTF-8");
+        get.addHeader("X-3scale-User-Client", "apiman");
+        get.end();
     }
 
     // Rep seems to require POST with URLEncoding 
