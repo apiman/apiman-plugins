@@ -10,9 +10,9 @@ public class ApiKeyReportData implements ReportData {
 	private final URI endpoint;
 	private final String serviceToken;
 	private final String userKey;
-	private final String providerKey;
+//	private final String providerKey;
 	private final String serviceId;
-	private final String referrer;
+	private final String timestamp;
 	private final String userId;
 	private final ParameterMap metrics;
 	private final ParameterMap log;
@@ -20,18 +20,18 @@ public class ApiKeyReportData implements ReportData {
 	public ApiKeyReportData(URI endpoint,
 			String serviceToken,
 			String userKey, 
-			String providerKey, 
+//			String providerKey, 
 			String serviceId,
-			String referrer,
+			String timestamp,
 			String userId,
 			ParameterMap usage,
 			ParameterMap log) {
 		this.endpoint = endpoint;
 		this.serviceToken = serviceToken;
 		this.userKey = userKey;
-		this.providerKey = providerKey;
+//		this.providerKey = providerKey;
 		this.serviceId = serviceId;
-		this.referrer = referrer;
+		this.timestamp = timestamp;
 		this.userId = userId;
 		this.metrics = usage;
 		this.log = log;	}
@@ -85,9 +85,9 @@ public class ApiKeyReportData implements ReportData {
 		return userKey;
 	}
 
-	public String getProviderKey() {
-		return providerKey;
-	}
+//	public String getProviderKey() {
+//		return providerKey;
+//	}
 
 	public String getServiceId() {
 		return serviceId;
@@ -103,8 +103,8 @@ public class ApiKeyReportData implements ReportData {
 		return log;
 	}
 
-	public String getReferrer() {
-		return referrer;
+	public String getTimestamp() {
+		return timestamp;
 	}
 	
 	public String getUserId() {

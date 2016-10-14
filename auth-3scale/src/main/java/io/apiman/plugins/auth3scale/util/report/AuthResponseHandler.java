@@ -13,6 +13,7 @@ import io.apiman.gateway.engine.policies.PolicyFailureCodes;
 public class AuthResponseHandler implements IAsyncResultHandler<IHttpClientResponse> {
 	
     private static final AsyncResultImpl<Void> OK_RESPONSE = AsyncResultImpl.create((Void) null);
+    
 	private final IAsyncResultHandler<Void> resultHandler;
 	private final IAsyncHandler<PolicyFailure> policyFailureHandler;
 	private final IPolicyFailureFactoryComponent failureFactory;
@@ -35,6 +36,7 @@ public class AuthResponseHandler implements IAsyncResultHandler<IHttpClientRespo
 
             switch (response.getResponseCode()) {
                 case 200:
+                case 202:
                     System.out.println("3scale backend was happy");
                     System.out.println(response.getBody());
                     resultHandler.handle(OK_RESPONSE);
@@ -51,7 +53,8 @@ public class AuthResponseHandler implements IAsyncResultHandler<IHttpClientRespo
                 			response.getResponseMessage());
                     break;
                 default:
-                    System.err.println("Unexpected or undocumented response code"); // TODO catchall. policy failure or exception?
+                	RuntimeException re = new RuntimeException("Unexpected or undocumented response code " + response.getResponseCode());
+                    resultHandler.handle(AsyncResultImpl.create(re)); // TODO catchall. policy failure or exception?
                     break;
             }
             

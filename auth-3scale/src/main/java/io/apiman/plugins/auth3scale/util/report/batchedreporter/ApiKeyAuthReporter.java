@@ -26,20 +26,23 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
 				continue;
 			
 			ApiKeyReportData reportData = queue.poll();
+			URI endpoint = reportData.getEndpoint();
 			// Base report
 			ParameterMap data = new ParameterMap();
-	    	data.add(AuthRepConstants.PROVIDER_KEY, reportData.getProviderKey()); 
+	    	data.add(AuthRepConstants.PROVIDER_KEY, reportData.getServiceToken()); 
 	    	data.add(AuthRepConstants.SERVICE_ID, reportData.getServiceId());
 	    	
 	    	// Transactions
-	    	List<ParameterMap> transactions = new ArrayList<>(); //TODO approximate - size is O(n) on linkedqueue
+	    	List<ParameterMap> transactions = new ArrayList<>(); //TODO approximate - size() is O(n) on linkedqueue, so don't use that.
 			int i = 0;
 			do {
-				ParameterMap transaction = new ParameterMap();
+				ParameterMap transaction = new ParameterMap(); // TODO consider moving these back into executor?
 				transactions.add(transaction);
 				
 				transaction.add(AuthRepConstants.USER_KEY, reportData.getUserKey());
-		    	setIfNotNull(transaction, AuthRepConstants.REFERRER, reportData.getReferrer());
+				transaction.add("timestamp", reportData.getTimestamp());
+				
+		    	//setIfNotNull(transaction, AuthRepConstants.REFERRER, reportData.getReferrer());
 		    	setIfNotNull(transaction, AuthRepConstants.USER_ID, reportData.getUserId());
 		    	transaction.add("usage", reportData.getUsage());
 		    	setIfNotNull(transaction, "log", reportData.getLog());
@@ -48,8 +51,8 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
 				reportData = queue.poll();
 			} while (reportData != null && i < MAX_RECORDS);
 			
-	    	data.add("transactions", (ParameterMap[]) transactions.toArray());
-	    	encodedReports.add(new ApiKeyAuthReportToSend(reportData.getEndpoint(), data.encode()));
+	    	data.add("transactions", transactions.toArray(new ParameterMap[transactions.size()]));
+	    	encodedReports.add(new ApiKeyAuthReportToSend(endpoint, data.encode()));
 		}
 		return encodedReports;
 	}
@@ -72,7 +75,7 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
 	
 	private static final class ApiKeyAuthReportToSend implements ReportToSend {
 		private final URI endpoint;
-		private String data;
+		private final String data;
 		
 		public ApiKeyAuthReportToSend(URI endpoint, String data) {
 			this.endpoint = endpoint;
@@ -86,7 +89,7 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
 
 		@Override
 		public String getEncoding() {
-			return "www/url-encoding..."; //TODO
+			return "application/x-www-form-urlencoded";
 		}
 
 		@Override

@@ -1,6 +1,9 @@
 package io.apiman.plugins.auth3scale.authrep.executors;
 
 
+import java.net.URI;
+import java.time.OffsetDateTime;
+
 import io.apiman.common.logging.IApimanLogger;
 import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
@@ -16,6 +19,7 @@ import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyAuthReporter;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyReportData;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
@@ -97,33 +101,30 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
 		return this;
 	}
 	
+	private static final URI REPORT_ENDPOINT = URI.create(DEFAULT_BACKEND+REPORT_PATH);
+	
 	public void doRep() {
         // Auth elems
-		paramMap.add(AuthRepConstants.USER_KEY, getUserKey()); // maybe use endpoint properties or something. or new properties field.
-    	paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); 
-    	paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(api.getApiNumericId()));
+		//paramMap.add(AuthRepConstants.USER_KEY, getUserKey()); // maybe use endpoint properties or something. or new properties field.
+    	//paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); 
+    	//paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(api.getApiNumericId()));
 		
-    	ParameterMap transactionArray[] = new ParameterMap[1]; // Will bump this up. Just testing...
-    	transactionArray[0] = new ParameterMap();
+    	//ParameterMap transactionArray[] = new ParameterMap[1]; // Will bump this up. Just testing...
+    	//transactionArray[0] = new ParameterMap();
     	
         // Metrics / Usage
-    	paramMap.add("transactions", transactionArray);
-    	transactionArray[0].add("usage", buildRepMetrics(api));
-        	
-    	
-    	
-    	
-		// Report
-//		IHttpClientRequest post = httpClient.request(DEFAULT_BACKEND + REPORT_PATH, 
-//        		HttpMethod.POST, 
-//        		new ReportResponseHandler(handler));
+    	//paramMap.add("transactions", transactionArray);
+    	//transactionArray[0].add("usage", buildRepMetrics(api));
 
-//		post.addHeader("Content-Type", "application/x-www-form-urlencoded");
-//		
-//		System.out.println("Writing the following:" + paramMap.encode());
-//		
-//		post.write(paramMap.encode(), "UTF-8");
-//		post.end();
+		reporter.addRecord(new ApiKeyReportData(REPORT_ENDPOINT, 
+				request.getApi().getProviderKey(), // serviceToken, 
+				getUserKey(), // userKey,
+				Long.toString(api.getApiNumericId()), // serviceId, 
+				OffsetDateTime.now().toString(), // timestamp, 
+				request.getHeaders().get(AuthRepConstants.USER_ID), // userId, 
+				buildRepMetrics(api), // usage, 
+				null //log
+				));
 	}
 	
 	
@@ -173,11 +174,6 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
 		return pm;
 	}
 	
-//	@Override
-//	public ApiKeyAuthExecutor authrep(IAsyncResultHandler<Void> handler) {
-//		throw new UnsupportedOperationException("Only support auth then rep."); //TODO deleteme
-//	}
-
     private String getUserKey() {
     	String userKey = context.getAttribute("user-key", null); // TODO
     	if (userKey == null) {
@@ -196,17 +192,4 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
 		this.reporter = reporter;
 		return this;
 	}
-
-//	@Override
-//	public void setReporter(AbstractReporter<? extends ReportToSend> reporter) {
-//		// TODO Auto-generated method stub
-//		
-//	}
-
-    
-//    if (api.getUserKeyLocation() == Api.UserKeyLocationEnum.HEADER) {
-//        return request.getHeaders().get(api.getUserKeyField());
-//    } else { // else UserKeyLocationEnum.QUERY
-//        return request.getQueryParams().get(api.getUserKeyField());
-//    }
 }
