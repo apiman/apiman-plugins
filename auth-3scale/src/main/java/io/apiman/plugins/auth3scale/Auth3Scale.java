@@ -19,7 +19,6 @@ import java.util.UUID;
 
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
-import io.apiman.gateway.engine.components.ILdapComponent;
 import io.apiman.gateway.engine.policies.AbstractMappedPolicy;
 import io.apiman.gateway.engine.policy.IPolicyChain;
 import io.apiman.gateway.engine.policy.IPolicyContext;
@@ -43,31 +42,31 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     private final BatchedReporter batchedReporter = new BatchedReporter();
     private final AuthRepFactory authRepFactory = new AuthRepFactory(batchedReporter);
     
-    protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {    	
-    	System.out.println("UUID = " + random);
-    	
-    	// Get HTTP Client TODO compare perf with singleton
-    	// TODO take this from services.backend.endpoint
-    	authRepFactory.createAuth(request, context)
-    			.setPolicyFailureHandler(chain::doFailure)         // If a policy failure occurs, call chain.doFailure
-    			.auth(result -> {         // If succeeds, or exception.
-    				if (result.isSuccess()) {
-    					// Keep the API request around so the auth key(s) can be accessed, etc.
-    					context.setAttribute(AUTH3SCALE_REQUEST, request);
-    					chain.doApply(request);
-    				} else {
-    					chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
-    				}
-    			});
+    protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {     
+        System.out.println("UUID = " + random);
+        
+        // Get HTTP Client TODO compare perf with singleton
+        // TODO take this from services.backend.endpoint
+        authRepFactory.createAuth(request, context)
+                .setPolicyFailureHandler(chain::doFailure) // If a policy failure occurs, call chain.doFailure
+                .auth(result -> {         // If succeeds, or exception.
+                    if (result.isSuccess()) {
+                        // Keep the API request around so the auth key(s) can be accessed, etc.
+                        context.setAttribute(AUTH3SCALE_REQUEST, request);
+                        chain.doApply(request);
+                    } else {
+                        chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
+                    }
+                });
     }
 
     protected void doApply(ApiResponse response, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiResponse> chain) {
-    	// Just let it go ahead, and report stuff at our leisure.
-    	chain.doApply(response);
-    	
-    	ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
+        // Just let it go ahead, and report stuff at our leisure.
+        chain.doApply(response);
+        
+        ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
         authRepFactory.createRep(response, request, context)
-        	.setPolicyFailureHandler(chain::doFailure)
-        	.rep();
+            .setPolicyFailureHandler(chain::doFailure)
+            .rep();
     }
 }

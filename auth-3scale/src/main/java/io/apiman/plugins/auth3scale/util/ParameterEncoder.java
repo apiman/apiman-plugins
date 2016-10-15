@@ -29,9 +29,9 @@ public class ParameterEncoder {
                     break;
                 case LONG:
                     result.append(emitNormalValue(mapKey, Long.toString(params.getLongValue(mapKey))));
-                	break;
+                    break;
                 default:
-                	break;
+                    break;
             }
             index++;
         }
@@ -93,9 +93,9 @@ public class ParameterEncoder {
         for (String key : mapValue.getKeys()) {
             if (index != 0) b.append("&");
             switch (mapValue.getType(key)) {
-            	case LONG:
+                case LONG:
                     b.append(emitMapValue(mapKey, key, Long.toString(mapValue.getLongValue(key))));
-                    break; 		
+                    break;      
                 case STRING:
                     b.append(emitMapValue(mapKey, key, mapValue.getStringValue(key)));
                     break;
@@ -128,23 +128,23 @@ public class ParameterEncoder {
     }
     
     public static void main(String... args) {
-    	ParameterMap map = new ParameterMap();
-    	map.add("foo", "bar");
-    	
-    	ParameterMap[] transactions = new ParameterMap[2];
-    	map.add("transactions", transactions);
-    	
-    	transactions[0] = new ParameterMap();
-    	transactions[1] = new ParameterMap();
-    	
-    	ParameterMap usage = new ParameterMap();
-    	usage.setLongValue("hits", 9);
-    	transactions[0].add("usage", usage);
-    	
-    	transactions[1].add("usage", usage);
+        ParameterMap map = new ParameterMap();
+        map.add("foo", "bar");
+        
+        ParameterMap[] transactions = new ParameterMap[2];
+        map.add("transactions", transactions);
+        
+        transactions[0] = new ParameterMap();
+        transactions[1] = new ParameterMap();
+        
+        ParameterMap usage = new ParameterMap();
+        usage.setLongValue("hits", 9);
+        transactions[0].add("usage", usage);
+        
+        transactions[1].add("usage", usage);
 
-    	
-    	ParameterEncoder pe = new ParameterEncoder();
-    	System.out.println(pe.encode(map)); 
+        
+        ParameterEncoder pe = new ParameterEncoder();
+        System.out.println(pe.encode(map)); 
     }
 }

@@ -18,120 +18,120 @@ import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.components.http.IHttpClientResponse;
 
 public class ReportResponseHandler implements IAsyncResultHandler<IHttpClientResponse> {
-	private final static IAsyncResult<ReportResponse> RESULT_OK = AsyncResultImpl.create(new SuccessfulReportResponse());
-	private final static SAXParserFactory factory = SAXParserFactory.newInstance();
-	
-	private final IAsyncResultHandler<ReportResponse> resultHandler;
+    private final static IAsyncResult<ReportResponse> RESULT_OK = AsyncResultImpl.create(new SuccessfulReportResponse());
+    private final static SAXParserFactory factory = SAXParserFactory.newInstance();
+    
+    private final IAsyncResultHandler<ReportResponse> resultHandler;
 
-	public ReportResponseHandler(IAsyncResultHandler<ReportResponse> resultHandler) {
-		this.resultHandler = resultHandler;
-	}
+    public ReportResponseHandler(IAsyncResultHandler<ReportResponse> resultHandler) {
+        this.resultHandler = resultHandler;
+    }
 
-	@Override
-	public void handle(IAsyncResult<IHttpClientResponse> result) {
-		if (result.isSuccess()) {
-			IHttpClientResponse postResponse = result.getResult();
-			if (postResponse.getResponseCode() == 200 || postResponse.getResponseCode() == 202) {
-				resultHandler.handle(RESULT_OK);
-			} else {
-				try {
-//					ReportResponse reportResponse = parseReport(postResponse.getBody());
-//					RuntimeException re = new RuntimeException(String.format("Backend report failed. Code: %s, Message: %s",
-//							reportResponse.getErrorCode(), reportResponse.getErrorMessage()));
-					ReportResponse reportResponse = parseReport(postResponse.getBody());
-					resultHandler.handle(AsyncResultImpl.create(reportResponse));
-				} catch (Exception e) {
-					RuntimeException re = new RuntimeException("Unable to parse report response", e); // TODO more specific
-					resultHandler.handle(AsyncResultImpl.create(re));
-				}				
-			}
-		}
-	}
-	
-	private static ReportResponse parseReport(String report) {
-		try {
-			SAXParser saxParser = factory.newSAXParser();
-			ReturnCodeListener listener = new ReturnCodeListener();
-			saxParser.parse(new InputSource(new StringReader(report)), listener);
-			return listener;
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	public static interface ReportResponse {
-		boolean success();
-		// boolean unauthorized?
-		String getErrorCode();
-		String getErrorMessage();
-	}
-	
-	private static final class SuccessfulReportResponse implements ReportResponse {
-		@Override
-		public boolean success() {
-			return true;
-		}
+    @Override
+    public void handle(IAsyncResult<IHttpClientResponse> result) {
+        if (result.isSuccess()) {
+            IHttpClientResponse postResponse = result.getResult();
+            if (postResponse.getResponseCode() == 200 || postResponse.getResponseCode() == 202) {
+                resultHandler.handle(RESULT_OK);
+            } else {
+                try {
+//                  ReportResponse reportResponse = parseReport(postResponse.getBody());
+//                  RuntimeException re = new RuntimeException(String.format("Backend report failed. Code: %s, Message: %s",
+//                          reportResponse.getErrorCode(), reportResponse.getErrorMessage()));
+                    ReportResponse reportResponse = parseReport(postResponse.getBody());
+                    resultHandler.handle(AsyncResultImpl.create(reportResponse));
+                } catch (Exception e) {
+                    RuntimeException re = new RuntimeException("Unable to parse report response", e); // TODO more specific
+                    resultHandler.handle(AsyncResultImpl.create(re));
+                }               
+            }
+        }
+    }
+    
+    private static ReportResponse parseReport(String report) {
+        try {
+            SAXParser saxParser = factory.newSAXParser();
+            ReturnCodeListener listener = new ReturnCodeListener();
+            saxParser.parse(new InputSource(new StringReader(report)), listener);
+            return listener;
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static interface ReportResponse {
+        boolean success();
+        // boolean unauthorized?
+        String getErrorCode();
+        String getErrorMessage();
+    }
+    
+    private static final class SuccessfulReportResponse implements ReportResponse {
+        @Override
+        public boolean success() {
+            return true;
+        }
 
-		@Override
-		public String getErrorCode() {
-			return null; // We don't actually care
-		}
+        @Override
+        public String getErrorCode() {
+            return null; // We don't actually care
+        }
 
-		@Override
-		public String getErrorMessage() {
-			return null; // We don't actually care
-		}
-	}
-	
-	private static final class ReturnCodeListener extends DefaultHandler implements ReportResponse {
-		private boolean qErrorMessage;
-		private String returnCode;
-		private String errorMessage;
-		
-		@Override
-		public void startElement(String uri, String localName,
+        @Override
+        public String getErrorMessage() {
+            return null; // We don't actually care
+        }
+    }
+    
+    private static final class ReturnCodeListener extends DefaultHandler implements ReportResponse {
+        private boolean qErrorMessage;
+        private String returnCode;
+        private String errorMessage;
+        
+        @Override
+        public void startElement(String uri, String localName,
                 String qName, Attributes attributes) throws SAXException {
-			if ("error".equalsIgnoreCase(qName)) {
-				qErrorMessage = true;
-				returnCode = attributes.getValue("code");
-			}
-		}
+            if ("error".equalsIgnoreCase(qName)) {
+                qErrorMessage = true;
+                returnCode = attributes.getValue("code");
+            }
+        }
 
-		@Override
-	    public void characters(char ch[], int start, int length)
-	            throws SAXException {
-			if (qErrorMessage) {
-				errorMessage = new String(ch, start, length);
-			}
-		}
+        @Override
+        public void characters(char ch[], int start, int length)
+                throws SAXException {
+            if (qErrorMessage) {
+                errorMessage = new String(ch, start, length);
+            }
+        }
 
-		@Override
-		public void endElement(String uri, String localName, String qName) 
-				throws SAXException {
-			qErrorMessage = false;
-		}
-		
-		public String getErrorCode() {
-			return returnCode;
-		}
-		
-		public String getErrorMessage() {
-			return errorMessage;
-		}
+        @Override
+        public void endElement(String uri, String localName, String qName) 
+                throws SAXException {
+            qErrorMessage = false;
+        }
+        
+        public String getErrorCode() {
+            return returnCode;
+        }
+        
+        public String getErrorMessage() {
+            return errorMessage;
+        }
 
-		@Override
-		public String toString() {
-			return "ReturnCodeListener [returnCode=" + returnCode + ", errorMessage=" + errorMessage + "]";
-		}
+        @Override
+        public String toString() {
+            return "ReturnCodeListener [returnCode=" + returnCode + ", errorMessage=" + errorMessage + "]";
+        }
 
-		@Override
-		public boolean success() {
-			return false;
-		}
+        @Override
+        public boolean success() {
+            return false;
+        }
 
-	}
-	
-	public static void main(String... args) {
-		System.out.println(parseReport("<error code=\"123\">application with id=\"foo\" was not found</error>"));
-	}
+    }
+    
+    public static void main(String... args) {
+        System.out.println(parseReport("<error code=\"123\">application with id=\"foo\" was not found</error>"));
+    }
 }

@@ -64,7 +64,7 @@ public class ParameterMap {
     }
     
     public void addUsage(ParameterMap usage) {
-    	data.put("usage", usage);
+        data.put("usage", usage);
     }
 
     /**
@@ -126,17 +126,17 @@ public class ParameterMap {
      * @return
      */
     public String getStringValue(String key) {
-    	switch (getType(key)) {
-		case ARRAY:
-			return Arrays.toString((ParameterMap[]) data.get(key));
-		case LONG:
-			return Long.toString((Long) data.get(key));
-		case MAP:
-			return ((ParameterMap) data.get(key)).toString(); //
-		case STRING:
-	        return (String) data.get(key);
-    	}
-		return null;
+        switch (getType(key)) {
+        case ARRAY:
+            return Arrays.toString((ParameterMap[]) data.get(key));
+        case LONG:
+            return Long.toString((Long) data.get(key));
+        case MAP:
+            return ((ParameterMap) data.get(key)).toString(); //
+        case STRING:
+            return (String) data.get(key);
+        }
+        return null;
     }
 
     /**
@@ -160,11 +160,11 @@ public class ParameterMap {
     }
     
     public long getLongValue(String key) {
-    	return (long) data.get(key);
+        return (long) data.get(key);
     }
     
     public void setLongValue(String key, long value) {
-    	data.put(key, value);
+        data.put(key, value);
     }
 
     /**
@@ -177,11 +177,11 @@ public class ParameterMap {
     }
     
     public String encode() {
-    	return encoder.encode(this);
+        return encoder.encode(this);
     }
     
     public boolean containsKey(String key) {
-    	return data.containsKey(key);
+        return data.containsKey(key);
     }
     
     

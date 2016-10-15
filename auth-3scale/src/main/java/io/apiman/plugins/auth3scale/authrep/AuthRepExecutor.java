@@ -12,7 +12,6 @@ import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
-import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
@@ -25,16 +24,16 @@ public abstract class AuthRepExecutor<T extends AbstractReporter<? extends Repor
     protected static final String AUTHREP_PATH = "/transactions/authrep.xml?";
     
     protected final ApiRequest request;
-	protected final ApiResponse response;
+    protected final ApiResponse response;
     protected final IHttpClientComponent httpClient;
     protected final IPolicyFailureFactoryComponent failureFactory;
     protected final ParameterMap paramMap;
     protected final Api api;
     
     protected IAsyncHandler<PolicyFailure> policyFailureHandler;
-	protected IPolicyContext context;
-		
-	private AuthRepExecutor(ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
+    protected IPolicyContext context;
+        
+    private AuthRepExecutor(ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
         this.request = request;
         this.response = response;
         this.api = api;
@@ -42,14 +41,14 @@ public abstract class AuthRepExecutor<T extends AbstractReporter<? extends Repor
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
         this.context = context;
         this.paramMap = new ParameterMap();
-	}
+    }
     
     public AuthRepExecutor(ApiRequest request, ApiResponse response, IPolicyContext context) {
-    	this(request, response, request.getApi(), context);
+        this(request, response, request.getApi(), context);
     }
 
     public AuthRepExecutor(ApiRequest request, IPolicyContext context) {
-    	this(request, null, request.getApi(), context);
+        this(request, null, request.getApi(), context);
     }
 
     public abstract AuthRepExecutor<T> auth(IAsyncResultHandler<Void> handler);

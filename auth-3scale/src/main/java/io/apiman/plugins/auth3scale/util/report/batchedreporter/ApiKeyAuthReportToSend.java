@@ -4,21 +4,21 @@
 //
 //public class ApiKeyAuthReportToSend implements ReportToSend {
 //
-//	@Override
-//	public String data() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+//  @Override
+//  public String data() {
+//      // TODO Auto-generated method stub
+//      return null;
+//  }
 //
-//	@Override
-//	public String encoding() {
-//		return "www/";
-//	}
+//  @Override
+//  public String encoding() {
+//      return "www/";
+//  }
 //
-//	@Override
-//	public URI endpoint() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+//  @Override
+//  public URI endpoint() {
+//      // TODO Auto-generated method stub
+//      return null;
+//  }
 //
 //}
