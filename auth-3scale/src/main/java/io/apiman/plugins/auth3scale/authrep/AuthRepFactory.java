@@ -24,12 +24,12 @@ public class AuthRepFactory {
         batchedReporter.addReporter(apiKeyAuthReporter);        
     }
     
-    public AuthRepExecutor<?> createAuth(ApiRequest request, IPolicyContext context) {
+    public AbstractAuthExecutor<?> createAuth(ApiRequest request, IPolicyContext context) {
         safeInitialise(context);
         return new ApiKeyAuthExecutor(request, context);
     }
 
-    public AuthRepExecutor<?> createRep(ApiResponse response, ApiRequest request, IPolicyContext context) {
+    public AbstractAuthExecutor<?> createRep(ApiResponse response, ApiRequest request, IPolicyContext context) {
         safeInitialise(context);
         return new ApiKeyAuthExecutor(response, request, context).setReporter(apiKeyAuthReporter);
     }
