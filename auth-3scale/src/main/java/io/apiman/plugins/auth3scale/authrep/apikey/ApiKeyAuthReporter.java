@@ -1,4 +1,4 @@
-package io.apiman.plugins.auth3scale.util.report.batchedreporter;
+package io.apiman.plugins.auth3scale.authrep.key;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
 
 public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
     // TODO consider ringbuffer.

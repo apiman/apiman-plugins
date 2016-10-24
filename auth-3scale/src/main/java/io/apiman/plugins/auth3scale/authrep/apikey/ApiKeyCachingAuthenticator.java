@@ -1,4 +1,4 @@
-package io.apiman.plugins.auth3scale.util.auth;
+package io.apiman.plugins.auth3scale.authrep.key;
 
 import java.util.Arrays;
 import java.util.Objects;

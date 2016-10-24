@@ -1,4 +1,4 @@
-package io.apiman.plugins.auth3scale.authrep.executors;
+package io.apiman.plugins.auth3scale.authrep.key;
 
 
 import java.net.URI;
@@ -17,10 +17,7 @@ import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
-import io.apiman.plugins.auth3scale.util.auth.ApiKeyCachingAuthenticator;
 import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
-import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyAuthReporter;
-import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyReportData;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}

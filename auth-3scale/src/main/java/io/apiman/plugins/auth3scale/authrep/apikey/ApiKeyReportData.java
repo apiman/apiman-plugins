@@ -1,9 +1,10 @@
-package io.apiman.plugins.auth3scale.util.report.batchedreporter;
+package io.apiman.plugins.auth3scale.authrep.key;
 
 import java.net.URI;
 import java.util.Objects;
 
 import io.apiman.plugins.auth3scale.util.ParameterMap;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
 
 public class ApiKeyReportData implements ReportData {
     
