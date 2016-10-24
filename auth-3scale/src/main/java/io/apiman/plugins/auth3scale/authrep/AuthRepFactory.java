@@ -7,6 +7,7 @@ import io.apiman.gateway.engine.components.IPeriodicComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyAuthExecutor;
 import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyAuthReporter;
+import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyRepExecutor;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
 /**
@@ -25,13 +26,12 @@ public class AuthRepFactory {
     }
     
     public AbstractAuthExecutor<?> createAuth(ApiRequest request, IPolicyContext context) {
-        safeInitialise(context);
         return new ApiKeyAuthExecutor(request, context);
     }
 
-    public AbstractAuthExecutor<?> createRep(ApiResponse response, ApiRequest request, IPolicyContext context) {
+    public AbstractRepExecutor<?> createRep(ApiResponse response, ApiRequest request, IPolicyContext context) {
         safeInitialise(context);
-        return new ApiKeyAuthExecutor(response, request, context).setReporter(apiKeyAuthReporter);
+        return new ApiKeyRepExecutor(response, request, context).setReporter(apiKeyAuthReporter);
     }
     
     private void safeInitialise(IPolicyContext context) {
