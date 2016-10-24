@@ -50,11 +50,11 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
                 .setPolicyFailureHandler(chain::doFailure) // If a policy failure occurs, call chain.doFailure
                 .auth(result -> {         // If succeeds, or exception.
                     if (result.isSuccess()) {
-                        // Keep the API request around so the auth key(s) can be accessed, etc.
+                        // Keep the API request around so the auth apikey(s) can be accessed, etc.
                         context.setAttribute(AUTH3SCALE_REQUEST, request);
                         chain.doApply(request);
                     } else {
-                        chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no key provided).
+                        chain.throwError(result.getError()); // TODO review whether all these cases are appropriate or should use PolicyFailure (e.g. no apikey provided).
                     }
                 });
     }

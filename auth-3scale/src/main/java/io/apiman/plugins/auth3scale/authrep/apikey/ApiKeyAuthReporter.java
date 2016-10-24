@@ -1,4 +1,4 @@
-package io.apiman.plugins.auth3scale.authrep.key;
+package io.apiman.plugins.auth3scale.authrep.apikey;
 
 import java.net.URI;
 import java.util.ArrayList;

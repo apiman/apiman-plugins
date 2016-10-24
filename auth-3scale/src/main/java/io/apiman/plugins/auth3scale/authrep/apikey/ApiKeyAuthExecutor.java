@@ -1,4 +1,4 @@
-package io.apiman.plugins.auth3scale.authrep.key;
+package io.apiman.plugins.auth3scale.authrep.apikey;
 
 
 import java.net.URI;
@@ -25,7 +25,7 @@ import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
 public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {   
     // TODO Can't remember the place where we put the special exceptions for this...
     private static final AsyncResultImpl<Void> OK_CACHED = AsyncResultImpl.create((Void) null);
-    private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user key provided!"));
+    private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user apikey provided!"));
     private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
     private static final ApiKeyCachingAuthenticator cachingAuthenticator = new ApiKeyCachingAuthenticator(); // TODO again, shared DS...
 
@@ -93,7 +93,7 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
         setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
 
         // TODO can also do predicted usage, if we see value in that..?
-        // Switch between oauth, key, and id+key when added
+        // Switch between oauth, apikey, and id+apikey when added
         IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(),
                 HttpMethod.GET,
                 new AuthResponseHandler(resultHandler, policyFailureHandler, failureFactory));
@@ -188,14 +188,14 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
     }
     
     private String getUserKey() {
-        String userKey = context.getAttribute("user-key", null); // TODO
+        String userKey = context.getAttribute("user-apikey", null); // TODO
         if (userKey == null) {
           if (api.getUserKeyLocation() == Api.UserKeyLocationEnum.HEADER) {
               userKey = request.getHeaders().get(api.getUserKeyField());
           } else { // else UserKeyLocationEnum.QUERY
               userKey = request.getQueryParams().get(api.getUserKeyField());
           }
-          context.setAttribute("user-key", userKey);
+          context.setAttribute("user-apikey", userKey);
         }
         return userKey;
     }

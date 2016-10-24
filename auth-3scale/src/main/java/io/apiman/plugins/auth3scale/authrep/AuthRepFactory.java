@@ -5,8 +5,8 @@ import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPeriodicComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
-import io.apiman.plugins.auth3scale.authrep.executors.ApiKeyAuthExecutor;
-import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyAuthReporter;
+import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyAuthExecutor;
+import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyAuthReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
 /**

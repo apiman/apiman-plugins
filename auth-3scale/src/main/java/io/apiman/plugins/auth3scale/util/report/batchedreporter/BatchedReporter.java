@@ -107,7 +107,6 @@ public class BatchedReporter {
                         new ReportResponseHandler(reportResult -> {
                             retryIfFailure(reportResult, sendIt);   
                             // TODO IMPORTANT: invalidate any bad credentials!
-                            //sending = false; //TODO wrong, wrong wrong!
                             itemsOfWork--;
                             System.out.println("Attempted to send report: Report was successful? " + reportResult.getResult().success() + " " + itemsOfWork );
                             checkFinishedSending();

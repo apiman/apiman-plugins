@@ -1,4 +1,4 @@
-package io.apiman.plugins.auth3scale.authrep.key;
+package io.apiman.plugins.auth3scale.authrep.apikey;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -39,7 +39,7 @@ public class ApiKeyCachingAuthenticator {
         return this;
     }
 
-    public ApiKeyCachingAuthenticator invalidate(ApiRequest serviceRequest, String apiKey) { // TODO invalidate will be with what key..?
+    public ApiKeyCachingAuthenticator invalidate(ApiRequest serviceRequest, String apiKey) { // TODO invalidate will be with what apikey..?
         lruCache.invalidate(getCacheKey(serviceRequest.getApiId(), apiKey,
                 hashArray(serviceRequest))); // TODO optmise
         return this;
