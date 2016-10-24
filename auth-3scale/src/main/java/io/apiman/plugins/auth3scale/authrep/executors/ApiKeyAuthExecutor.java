@@ -17,6 +17,7 @@ import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.authrep.AuthRepExecutor;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
+import io.apiman.plugins.auth3scale.util.auth.ApiKeyCachingAuthenticator;
 import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyAuthReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyReportData;
@@ -25,9 +26,11 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.ApiKeyReportData
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {   
-    // TODO Can't remember the place where we put the special exceptions for this... 
+    // TODO Can't remember the place where we put the special exceptions for this...
+    private static final AsyncResultImpl<Void> OK_CACHED = AsyncResultImpl.create((Void) null);
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user key provided!"));
     private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
+    private static final ApiKeyCachingAuthenticator cachingAuthenticator = new ApiKeyCachingAuthenticator(); // TODO again, shared DS...
 
     @SuppressWarnings("unused")
     private final IApimanLogger logger;
@@ -52,7 +55,7 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
     }
     
     private boolean hasRoutes(ApiRequest req) {
-        return api.getRouteMatcher().match(request.getDestination()).length > 0;
+        return api.getRouteMatcher().match(req.getDestination()).length > 0;
     }
 
     @Override
@@ -72,21 +75,32 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
             resultHandler.handle(FAIL_NO_ROUTE);
             return;
         }
-        
+
+        if (cachingAuthenticator.isAuthCached(request, userKey)) {
+            System.out.println("Cached");
+            resultHandler.handle(OK_CACHED);
+        } else {
+            System.out.println("Doing uncached auth");
+            doBlockingAuth(resultHandler, userKey);
+            cachingAuthenticator.cache(request, userKey);
+        }
+    }
+
+    private void doBlockingAuth(IAsyncResultHandler<Void> resultHandler, String userKey) {
         // Auth elems
         paramMap.add(AuthRepConstants.USER_KEY, userKey);
         paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
         paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
-        
+
         setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
         setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
-        
+
         // TODO can also do predicted usage, if we see value in that..?
         // Switch between oauth, key, and id+key when added
-        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(), 
-                HttpMethod.GET, 
+        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(),
+                HttpMethod.GET,
                 new AuthResponseHandler(resultHandler, policyFailureHandler, failureFactory));
-          
+
         //get.setConnectTimeout(1000);
         //get.setReadTimeout(1000);
         get.addHeader("Accept-Charset", "UTF-8");
@@ -116,6 +130,8 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
         //paramMap.add("transactions", transactionArray);
         //transactionArray[0].add("usage", buildRepMetrics(api));
 
+
+
         reporter.addRecord(new ApiKeyReportData(REPORT_ENDPOINT, 
                 request.getApi().getProviderKey(), // serviceToken, 
                 getUserKey(), // userKey,
@@ -123,11 +139,11 @@ public class ApiKeyAuthExecutor extends AuthRepExecutor<ApiKeyAuthReporter> {
                 OffsetDateTime.now().toString(), // timestamp, 
                 request.getHeaders().get(AuthRepConstants.USER_ID), // userId, 
                 buildRepMetrics(api), // usage, 
-                null //log
-                ));
+                new ParameterMap().add("code", (long) response.getCode()) // log (not holding raw req/res)
+            ));
     }
-    
-    
+
+
     /**
      * Mapping Rules Syntax A Mapping Rule has to start with '/'. This looks for
      * matches from the beginning of the string, ignoring the rest if the first

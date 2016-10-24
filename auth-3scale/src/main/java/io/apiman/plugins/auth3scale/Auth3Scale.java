@@ -36,15 +36,14 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     }
     
     private static final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ";
-    private String random = UUID.randomUUID().toString();
+    private String uuid = UUID.randomUUID().toString();
     
     // effectively static anyway
     private final BatchedReporter batchedReporter = new BatchedReporter();
     private final AuthRepFactory authRepFactory = new AuthRepFactory(batchedReporter);
     
-    protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {     
-        System.out.println("UUID = " + random);
-        
+    protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {       
+        System.out.println("Thread ID " + Thread.currentThread().getId() + " on " + uuid);
         // Get HTTP Client TODO compare perf with singleton
         // TODO take this from services.backend.endpoint
         authRepFactory.createAuth(request, context)

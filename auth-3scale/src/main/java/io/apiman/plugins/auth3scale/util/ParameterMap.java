@@ -59,8 +59,9 @@ public class ParameterMap {
         data.put(key, value);
     }
     
-    public <T> void add(String key, T value) {
+    public <T> ParameterMap add(String key, T value) {
         data.put(key, value);
+        return this;
     }
     
     public void addUsage(ParameterMap usage) {

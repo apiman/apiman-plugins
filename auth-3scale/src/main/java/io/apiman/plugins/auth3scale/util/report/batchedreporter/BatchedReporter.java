@@ -143,7 +143,7 @@ public class BatchedReporter {
         @Override
         public List<ReportToSend> encode() {
             List<ReportToSend> copy = new LinkedList<>(resendReports);
-            resendReports.clear();
+            resendReports.clear(); // Some may end up coming back again if retry fails.
             return copy;
         }
 
@@ -152,8 +152,9 @@ public class BatchedReporter {
             throw new UnsupportedOperationException("Should not call #addRecord on special retry BatchedReporter");
         }
         
+        // Notice that super.full() is never triggered, we just evict old records once limit is hit.
         public AbstractReporter<ReportData> addRetry(ReportToSend report) {
-            resendReports.offer(report);
+            resendReports.offer(report); 
             return this;
         }
     }

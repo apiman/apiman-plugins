@@ -16,7 +16,7 @@ public abstract class AbstractReporter<T extends ReportData> {
     public abstract List<ReportToSend> encode();
     public abstract AbstractReporter<T> addRecord(T record);
 
-    protected AbstractReporter<T> setFullHandler(IAsyncHandler<Void> fullHandler) {
+    public AbstractReporter<T> setFullHandler(IAsyncHandler<Void> fullHandler) {
         this.fullHandler = fullHandler;
         return this;
     }
