@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.apiman.plugins.auth3scale.authrep.apikey;
+package io.apiman.plugins.auth3scale.authrep.appid;
+
+import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
+import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyReportData;
+import io.apiman.plugins.auth3scale.util.ParameterMap;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
+import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -22,12 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
-import io.apiman.plugins.auth3scale.util.ParameterMap;
-import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
-import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
-
-public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
+public class AppIdAuthReporter extends AbstractReporter<ApiKeyReportData> {
     // TODO consider ringbuffer.
     private final Map<Integer, ConcurrentLinkedQueue<ApiKeyReportData>> reports = new ConcurrentHashMap<>(); // TODO LRU?
     private static final int DEFAULT_LIST_CAPAC = 800;
@@ -74,7 +75,7 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
     }
 
     @Override
-    public ApiKeyAuthReporter addRecord(ApiKeyReportData record) {
+    public AppIdAuthReporter addRecord(ApiKeyReportData record) {
         ConcurrentLinkedQueue<ApiKeyReportData> reportGroup = reports.computeIfAbsent(record.groupId(), k -> new ConcurrentLinkedQueue<>());
 
         reportGroup.add(record);

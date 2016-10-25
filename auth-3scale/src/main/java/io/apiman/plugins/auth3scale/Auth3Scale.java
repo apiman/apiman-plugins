@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 JBoss Inc
+ * Copyright 2016 JBoss Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,11 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
-    
-    protected Class<Auth3ScaleBean> getConfigurationClass() {
-        return Auth3ScaleBean.class;
-    }
-    
     private static final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ";
-    private String uuid = UUID.randomUUID().toString();
-    
-    // effectively static anyway
     private final BatchedReporter batchedReporter = new BatchedReporter();
     private final AuthRepFactory authRepFactory = new AuthRepFactory(batchedReporter);
-    
+    private String uuid = UUID.randomUUID().toString();
+
     protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {       
         System.out.println("Thread ID " + Thread.currentThread().getId() + " on " + uuid);
         // Get HTTP Client TODO compare perf with singleton
@@ -67,5 +60,9 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
         authRepFactory.createRep(response, request, context)
             .setPolicyFailureHandler(chain::doFailure)
             .rep();
+    }
+
+    protected Class<Auth3ScaleBean> getConfigurationClass() {
+        return Auth3ScaleBean.class;
     }
 }
