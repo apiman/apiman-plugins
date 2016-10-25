@@ -22,7 +22,7 @@ import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policies.AbstractMappedPolicy;
 import io.apiman.gateway.engine.policy.IPolicyChain;
 import io.apiman.gateway.engine.policy.IPolicyContext;
-import io.apiman.plugins.auth3scale.authrep.AuthRepFactory;
+import io.apiman.plugins.auth3scale.authrep.AuthRep;
 import io.apiman.plugins.auth3scale.beans.Auth3ScaleBean;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
@@ -32,7 +32,7 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
     private static final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ";
     private final BatchedReporter batchedReporter = new BatchedReporter();
-    private final AuthRepFactory authRepFactory = new AuthRepFactory(batchedReporter);
+    private final AuthRep authRepFactory = new AuthRep(batchedReporter);
     private String uuid = UUID.randomUUID().toString();
 
     protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {       
