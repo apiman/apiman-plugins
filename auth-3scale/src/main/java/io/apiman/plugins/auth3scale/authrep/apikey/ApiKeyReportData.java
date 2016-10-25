@@ -21,43 +21,97 @@ import java.util.Objects;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
 
+/**
+ * @author Marc Savy {@literal <msavy@redhat.com>}
+ */
 public class ApiKeyReportData implements ReportData {
-    
-    private final URI endpoint;
-    private final String serviceToken;
-    private final String userKey;
-    private final String serviceId;
-    private final String timestamp;
-    private final String userId;
-    private final ParameterMap metrics;
-    private final ParameterMap log;
+    private URI endpoint;
+    private String serviceToken;
+    private String userKey;
+    private String serviceId;
+    private String timestamp;
+    private String userId;
+    private ParameterMap usage;
+    private ParameterMap log;
 
-    public ApiKeyReportData(URI endpoint,
-            String serviceToken,
-            String userKey, 
-            String serviceId,
-            String timestamp,
-            String userId,
-            ParameterMap usage,
-            ParameterMap log) {
-        this.endpoint = endpoint;
-        this.serviceToken = serviceToken;
-        this.userKey = userKey;
-        this.serviceId = serviceId;
-        this.timestamp = timestamp;
-        this.userId = userId;
-        this.metrics = usage;
-        this.log = log; }
-    ///////
-    
     public URI getEndpoint() {
         return endpoint;
     }
-    
+
+    public ApiKeyReportData setEndpoint(URI endpoint) {
+        this.endpoint = endpoint;
+        return this;
+    }
+
+    public String getServiceToken() {
+        return serviceToken;
+    }
+
+    public ApiKeyReportData setServiceToken(String serviceToken) {
+        this.serviceToken = serviceToken;
+        return this;
+    }
+
+    public String getUserKey() {
+        return userKey;
+    }
+
+    public ApiKeyReportData setUserKey(String userKey) {
+        this.userKey = userKey;
+        return this;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public ApiKeyReportData setServiceId(String serviceId) {
+        this.serviceId = serviceId;
+        return this;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public ApiKeyReportData setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+        return this;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public ApiKeyReportData setUserId(String userId) {
+        this.userId = userId;
+        return this;
+    }
+
+    @Override
+    public ParameterMap getUsage() {
+        return usage;
+    }
+
+    public ApiKeyReportData setUsage(ParameterMap usage) {
+        this.usage = usage;
+        return this;
+    }
+
+    @Override
+    public ParameterMap getLog() {
+        return log;
+    }
+
+    public ApiKeyReportData setLog(ParameterMap log) {
+        this.log = log;
+        return this;
+    }
+
     public int groupId() {
         return hashCode();
     }
-    
+
     @Override
     public int hashCode() { //TODO
         return Objects.hash(endpoint, serviceToken, serviceId);
@@ -88,35 +142,5 @@ public class ApiKeyReportData implements ReportData {
         } else if (!serviceToken.equals(other.serviceToken))
             return false;
         return true;
-    }
-
-    public String getServiceToken() {
-        return serviceToken;
-    }
-
-    public String getUserKey() {
-        return userKey;
-    }
-
-    public String getServiceId() {
-        return serviceId;
-    }
-
-    @Override
-    public ParameterMap getUsage() {
-        return metrics;
-    }
-    
-    @Override
-    public ParameterMap getLog() {
-        return log;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-    
-    public String getUserId() {
-        return userId;
     }
 }

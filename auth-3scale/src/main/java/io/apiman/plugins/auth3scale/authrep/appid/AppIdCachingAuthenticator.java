@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public class ApiIdCachingAuthenticator {
+public class AppIdCachingAuthenticator {
     private static final int CAPACITY = 10_000_000;
 
     private Cache<Integer, Boolean> lruCache = CacheBuilder.newBuilder()
@@ -47,13 +47,13 @@ public class ApiIdCachingAuthenticator {
         }
     }
 
-    ApiIdCachingAuthenticator cache(ApiRequest serviceRequest, String appKey, String appId) {
+    AppIdCachingAuthenticator cache(ApiRequest serviceRequest, String appKey, String appId) {
         lruCache.put(getCacheKey(serviceRequest.getApiId(), appKey, appId,
                 hashArray(serviceRequest)), true); // true is just placeholder
         return this;
     }
 
-    public ApiIdCachingAuthenticator invalidate(ApiRequest serviceRequest, String appKey, String appId) { // TODO invalidate will be with what apikey..?
+    public AppIdCachingAuthenticator invalidate(ApiRequest serviceRequest, String appKey, String appId) { // TODO invalidate will be with what apikey..?
         lruCache.invalidate(getCacheKey(serviceRequest.getApiId(), appKey, appId,
                 hashArray(serviceRequest)));
         return this;

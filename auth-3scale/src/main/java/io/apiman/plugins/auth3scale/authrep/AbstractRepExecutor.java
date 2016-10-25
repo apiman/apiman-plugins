@@ -18,7 +18,8 @@ import java.net.URI;
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends ReportData>> implements IdentityFromContext {
+public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends ReportData>>
+        implements IdentityFromContext {
 
     protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
     protected static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
@@ -104,5 +105,9 @@ public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends R
             }
         }
         return pm;
+    }
+
+    protected ParameterMap buildLog() {
+        return new ParameterMap().add("code", (long) response.getCode());
     }
 }

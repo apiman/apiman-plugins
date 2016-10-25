@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.apiman.plugins.auth3scale.authrep.apikey;
+package io.apiman.plugins.auth3scale.authrep.appid;
 
-import io.apiman.common.logging.IApimanLogger;
-import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policy.IPolicyContext;
@@ -29,48 +27,43 @@ import java.time.OffsetDateTime;
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
-    // TODO Can't remember the place where we put the special exceptions for this...
-    private static final AsyncResultImpl<Void> OK_CACHED = AsyncResultImpl.create((Void) null);
-    private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user apikey provided!"));
-    private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
-    private static final ApiKeyCachingAuthenticator cachingAuthenticator = new ApiKeyCachingAuthenticator(); // TODO again, shared DS...
+public class AppIdRepExecutor extends AbstractRepExecutor<AppIdAuthReporter> {
+    private AppIdAuthReporter reporter;
 
-    private ApiKeyAuthReporter reporter;
-
-    public ApiKeyRepExecutor(ApiResponse response, ApiRequest request, IPolicyContext context) {
+    public AppIdRepExecutor(ApiResponse response, ApiRequest request, IPolicyContext context) {
         super(request, response, context);
     }
 
     // Rep seems to require POST with URLEncoding 
     @Override
-    public ApiKeyRepExecutor rep() {
+    public AppIdRepExecutor rep() {
         doRep();
         return this;
     }
 
     private void doRep() {
-        ApiKeyReportData report = new ApiKeyReportData()
+        AppIdReportData report = new AppIdReportData()
                 .setEndpoint(REPORT_ENDPOINT)
-                .setUserKey(getUserKey())
+                .setServiceToken(request.getApi().getProviderKey())
                 .setServiceId(Long.toString(api.getApiNumericId()))
-                .setTimestamp( OffsetDateTime.now().toString())
+                .setAppId(getAppId())
                 .setUserId(getUserId())
+                .setTimestamp(OffsetDateTime.now().toString())
                 .setUsage(buildRepMetrics(api))
                 .setLog(buildLog());
         reporter.addRecord(report);
+    }
+
+    private String getAppId() {
+        return getIdentityElementFromContext(context, request, api, "app_id");
     }
 
     private String getUserId() {
         return request.getHeaders().get(AuthRepConstants.USER_ID);
     }
 
-    private String getUserKey() {
-        return getIdentityElementFromContext(context, request, api, "user_key");
-    }
-
     @Override
-    public ApiKeyRepExecutor setReporter(ApiKeyAuthReporter reporter) {
+    public AppIdRepExecutor setReporter(AppIdAuthReporter reporter) {
         this.reporter = reporter;
         return this;
     }

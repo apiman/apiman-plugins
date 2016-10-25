@@ -36,7 +36,7 @@ public class AppIdAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_APP_ID = AsyncResultImpl.create(new RuntimeException("No user app id provided")); // TODO mirror 3scale errors
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_APP_KEY = AsyncResultImpl.create(new RuntimeException("No user app key provided")); // TODO mirror 3scale errors
     private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
-    private static final ApiIdCachingAuthenticator cachingAuthenticator = new ApiIdCachingAuthenticator(); // TODO again, shared DS...
+    private static final AppIdCachingAuthenticator cachingAuthenticator = new AppIdCachingAuthenticator(); // TODO again, shared DS...
 
     private final IApimanLogger logger;
 
