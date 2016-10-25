@@ -20,7 +20,6 @@ import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.AbstractRepExecutor;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
-import io.apiman.plugins.auth3scale.util.ParameterMap;
 
 import java.time.OffsetDateTime;
 
