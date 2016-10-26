@@ -31,6 +31,7 @@ import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> {
+    private static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
     // TODO Can't remember the place where we put the special exceptions for this...
     private static final AsyncResultImpl<Void> OK_CACHED = AsyncResultImpl.create((Void) null);
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user apikey provided!"));
@@ -39,7 +40,7 @@ public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter>
 
     private final IApimanLogger logger;
 
-    public ApiKeyAuthExecutor(ApiRequest request, IPolicyContext context) {
+    ApiKeyAuthExecutor(ApiRequest request, IPolicyContext context) {
         super(request, context);
         logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
@@ -100,6 +101,6 @@ public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter>
     }
 
     private String getUserKey() {
-        return getIdentityElementFromContext(context, request, api, "user_key");
+        return getIdentityElementFromContext(context, request, api, AuthRepConstants.USER_KEY);
     }
 }

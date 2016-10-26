@@ -13,43 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.apiman.plugins.auth3scale.authrep.apikey;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+package io.apiman.plugins.auth3scale.authrep.oauth;
 
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
 
-public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+public class OauthAuthReporter extends AbstractReporter<OauthReportData> {
+
     @Override // TODO need locking?
     public List<ReportToSend> encode() {
         List<ReportToSend> encodedReports = new ArrayList<>(reports.size());
-        for (ConcurrentLinkedQueue<ApiKeyReportData> queue : reports.values()) {
+        for (ConcurrentLinkedQueue<OauthReportData> queue : reports.values()) {
             if (queue.isEmpty())
                 continue;
 
-            ApiKeyReportData reportData = queue.poll();
+            OauthReportData reportData = queue.poll();
             URI endpoint = reportData.getEndpoint();
             // Base report
             ParameterMap data = new ParameterMap();
-            data.add(AuthRepConstants.PROVIDER_KEY, reportData.getServiceToken()); 
+            data.add(AuthRepConstants.PROVIDER_KEY, reportData.getServiceToken());
             data.add(AuthRepConstants.SERVICE_ID, reportData.getServiceId());
 
             // Transactions
-            List<ParameterMap> transactions = new ArrayList<>(); //TODO approximate - size() is O(n) on linkedqueue, so don't use that.
+            List<ParameterMap> transactions = new ArrayList<>();
             int i = 0;
             do {
                 ParameterMap transaction = new ParameterMap(); // TODO consider moving these back into executor?
                 transactions.add(transaction);
 
-                transaction.add(AuthRepConstants.USER_KEY, reportData.getUserKey());
+                setIfNotNull(transaction, AuthRepConstants.APP_ID, reportData.getAppId());
                 setIfNotNull(transaction, AuthRepConstants.USER_ID, reportData.getUserId());
                 setIfNotNull(transaction, AuthRepConstants.TIMESTAMP, reportData.getTimestamp());
                 setIfNotNull(transaction, AuthRepConstants.USAGE, reportData.getUsage());
@@ -60,14 +59,14 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
             } while (reportData != null && i < MAX_RECORDS);
 
             data.add(AuthRepConstants.TRANSACTIONS, transactions.toArray(new ParameterMap[transactions.size()]));
-            encodedReports.add(new ApiKeyAuthReportToSend(endpoint, data.encode()));
+            encodedReports.add(new OauthReportToSend(endpoint, data.encode()));
         }
         return encodedReports;
     }
 
     @Override
-    public ApiKeyAuthReporter addRecord(ApiKeyReportData record) {
-        ConcurrentLinkedQueue<ApiKeyReportData> reportGroup = reports.computeIfAbsent(record.groupId(), k -> new ConcurrentLinkedQueue<>());
+    public OauthAuthReporter addRecord(OauthReportData record) {
+        ConcurrentLinkedQueue<OauthReportData> reportGroup = reports.computeIfAbsent(record.groupId(), k -> new ConcurrentLinkedQueue<>());
 
         reportGroup.add(record);
 
@@ -77,11 +76,11 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
         return this;
     }
 
-    private static final class ApiKeyAuthReportToSend implements ReportToSend {
+    private static final class OauthReportToSend implements ReportToSend {
         private final URI endpoint;
         private final String data;
 
-        ApiKeyAuthReportToSend(URI endpoint, String data) {
+        OauthReportToSend(URI endpoint, String data) {
             this.endpoint = endpoint;
             this.data = data;
         }

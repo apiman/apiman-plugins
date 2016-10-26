@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class AppIdAuthReporter extends AbstractReporter<AppIdReportData> {
 
-    @Override // TODO need locking?
+    @Override
     public List<ReportToSend> encode() {
         List<ReportToSend> encodedReports = new ArrayList<>(reports.size());
         for (ConcurrentLinkedQueue<AppIdReportData> queue : reports.values()) {
@@ -49,18 +49,16 @@ public class AppIdAuthReporter extends AbstractReporter<AppIdReportData> {
                 transactions.add(transaction);
 
                 transaction.add(AuthRepConstants.APP_ID, reportData.getAppId());
-                transaction.add(AuthRepConstants.USER_ID, reportData.getUserId());
-                transaction.add("timestamp", reportData.getTimestamp());
-
                 setIfNotNull(transaction, AuthRepConstants.USER_ID, reportData.getUserId());
-                transaction.add("usage", reportData.getUsage());
-                setIfNotNull(transaction, "log", reportData.getLog());
+                setIfNotNull(transaction, AuthRepConstants.TIMESTAMP, reportData.getTimestamp());
+                setIfNotNull(transaction, AuthRepConstants.USAGE, reportData.getUsage());
+                setIfNotNull(transaction, AuthRepConstants.LOG, reportData.getLog());
 
                 i++;
                 reportData = queue.poll();
             } while (reportData != null && i < MAX_RECORDS);
 
-            data.add("transactions", transactions.toArray(new ParameterMap[transactions.size()]));
+            data.add(AuthRepConstants.TRANSACTIONS, transactions.toArray(new ParameterMap[transactions.size()]));
             encodedReports.add(new AppIdAuthReportToSend(endpoint, data.encode()));
         }
         return encodedReports;

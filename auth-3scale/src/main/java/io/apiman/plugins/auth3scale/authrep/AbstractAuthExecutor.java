@@ -19,10 +19,8 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public abstract class AbstractAuthExecutor<T extends AbstractReporter<? extends ReportData>> implements IdentityFromContext {
-
     protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
-    protected static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
-    
+
     protected final ApiRequest request;
     protected final IHttpClientComponent httpClient;
     protected final IPolicyFailureFactoryComponent failureFactory;

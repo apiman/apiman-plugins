@@ -22,15 +22,11 @@ public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends R
         implements IdentityFromContext {
 
     protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
-    protected static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
     protected static final String REPORT_PATH = "/transactions.xml";
-    protected static final String AUTHREP_PATH = "/transactions/authrep.xml?";
     protected static final URI REPORT_ENDPOINT = URI.create(DEFAULT_BACKEND+REPORT_PATH);
-
 
     protected final ApiRequest request;
     protected final ApiResponse response;
-    protected final IHttpClientComponent httpClient;
     protected final IPolicyFailureFactoryComponent failureFactory;
     protected final ParameterMap paramMap;
     protected final Api api;
@@ -42,7 +38,6 @@ public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends R
         this.request = request;
         this.response = response;
         this.api = api;
-        this.httpClient = context.getComponent(IHttpClientComponent.class);
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
         this.context = context;
         this.paramMap = new ParameterMap();

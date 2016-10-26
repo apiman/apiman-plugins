@@ -32,6 +32,7 @@ import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public class AppIdAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> {
+    private static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
     private static final AsyncResultImpl<Void> OK_CACHED = AsyncResultImpl.create((Void) null);
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_APP_ID = AsyncResultImpl.create(new RuntimeException("No user app id provided")); // TODO mirror 3scale errors
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_APP_KEY = AsyncResultImpl.create(new RuntimeException("No user app key provided")); // TODO mirror 3scale errors
@@ -105,10 +106,10 @@ public class AppIdAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
     }
 
     private String getAppKey() {
-        return getIdentityElementFromContext(context, request, api, "app_key");
+        return getIdentityElementFromContext(context, request, api, AuthRepConstants.APP_KEY);
     }
 
     private String getAppId() {
-        return getIdentityElementFromContext(context, request, api, "app_id");
+        return getIdentityElementFromContext(context, request, api, AuthRepConstants.APP_ID);
     }
 }

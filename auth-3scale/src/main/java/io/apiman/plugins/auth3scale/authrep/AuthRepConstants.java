@@ -14,4 +14,10 @@ public interface AuthRepConstants {
 
     String APP_ID = "app_id";
     String APP_KEY = "app_key";
+    String REDIRECT_URL = "redirect_url";
+    String REDIRECT_URI = "redirect_uri";
+    String ACCESS_TOKEN = "access_token";
+    String CLIENT_ID = "client_id";
+    String TIMESTAMP = "timestamp";
+    String USAGE = "usage";
 }

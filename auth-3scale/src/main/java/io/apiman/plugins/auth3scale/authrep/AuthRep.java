@@ -8,6 +8,7 @@ import io.apiman.gateway.engine.components.IPeriodicComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyFactory;
 import io.apiman.plugins.auth3scale.authrep.appid.AppIdFactory;
+import io.apiman.plugins.auth3scale.authrep.oauth.OauthFactory;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
 import java.util.HashMap;
@@ -26,12 +27,15 @@ public class AuthRep {
 
         ApiKeyFactory apiKeyFactory = new ApiKeyFactory();
         AppIdFactory appIdFactory = new AppIdFactory();
+        OauthFactory oauthFactory = new OauthFactory();
 
         factories.put(AuthTypeEnum.API_KEY, apiKeyFactory);
         factories.put(AuthTypeEnum.APP_ID, appIdFactory);
+        factories.put(AuthTypeEnum.OAUTH, oauthFactory);
 
         batchedReporter.addReporter(apiKeyFactory.getReporter());
         batchedReporter.addReporter(appIdFactory.getReporter());
+        batchedReporter.addReporter(oauthFactory.getReporter());
     }
     
     public AbstractAuthExecutor<?> createAuth(ApiRequest request, IPolicyContext context) {
