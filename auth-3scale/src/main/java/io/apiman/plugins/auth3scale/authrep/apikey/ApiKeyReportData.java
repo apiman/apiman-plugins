@@ -118,6 +118,13 @@ public class ApiKeyReportData implements ReportData {
     }
 
     @Override
+    public String toString() {
+        return "ApiKeyReportData [endpoint=" + endpoint + ", serviceToken=" + serviceToken + ", userKey="
+                + userKey + ", serviceId=" + serviceId + ", timestamp=" + timestamp + ", userId=" + userId
+                + ", usage=" + usage + ", log=" + log + "]";
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;

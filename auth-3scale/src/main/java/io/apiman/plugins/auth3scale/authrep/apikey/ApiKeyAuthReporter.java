@@ -18,8 +18,6 @@ package io.apiman.plugins.auth3scale.authrep.apikey;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
@@ -60,6 +58,7 @@ public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
             } while (reportData != null && i < MAX_RECORDS);
 
             data.add(AuthRepConstants.TRANSACTIONS, transactions.toArray(new ParameterMap[transactions.size()]));
+            System.out.println("data about to be encoded... " + reportData);
             encodedReports.add(new ApiKeyAuthReportToSend(endpoint, data.encode()));
         }
         return encodedReports;

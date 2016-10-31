@@ -184,6 +184,9 @@ public class ParameterMap {
     public boolean containsKey(String key) {
         return data.containsKey(key);
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "ParameterMap [data=" + data + "]";
+    }
 }

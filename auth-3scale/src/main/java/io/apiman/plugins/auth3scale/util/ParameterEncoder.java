@@ -74,6 +74,10 @@ public class ParameterEncoder {
                 case ARRAY:
                     // TODO does ARRAY need to be handled?
                     break;
+                case LONG:
+                    break;
+                default:
+                    break;
             }
         }
         return b.toString();

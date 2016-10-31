@@ -43,7 +43,7 @@ public class AppIdRepExecutor extends AbstractRepExecutor<AppIdAuthReporter> {
     private void doRep() {
         AppIdReportData report = new AppIdReportData()
                 .setEndpoint(REPORT_ENDPOINT)
-                .setServiceToken(request.getApi().getProviderKey())
+                .setServiceToken(api.getProviderKey())
                 .setServiceId(Long.toString(api.getApiNumericId()))
                 .setAppId(getAppId())
                 .setUserId(getUserId())
@@ -54,11 +54,11 @@ public class AppIdRepExecutor extends AbstractRepExecutor<AppIdAuthReporter> {
     }
 
     private String getAppId() {
-        return getIdentityElementFromContext(context, request, api, "app_id");
+        return getIdentityElementFromContext(context, request, api, AuthRepConstants.APP_ID);
     }
 
     private String getUserId() {
-        return request.getHeaders().get(AuthRepConstants.USER_ID);
+        return getIdentityElementFromContext(context, request, api, AuthRepConstants.USER_ID);
     }
 
     @Override

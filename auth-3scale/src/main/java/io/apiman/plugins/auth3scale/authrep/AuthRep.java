@@ -33,9 +33,9 @@ public class AuthRep {
         factories.put(AuthTypeEnum.APP_ID, appIdFactory);
         factories.put(AuthTypeEnum.OAUTH, oauthFactory);
 
-        batchedReporter.addReporter(apiKeyFactory.getReporter());
-        batchedReporter.addReporter(appIdFactory.getReporter());
-        batchedReporter.addReporter(oauthFactory.getReporter());
+        batchedReporter.addReporter(apiKeyFactory.getReporter())
+                .addReporter(appIdFactory.getReporter())
+                .addReporter(oauthFactory.getReporter());
     }
     
     public AbstractAuthExecutor<?> createAuth(ApiRequest request, IPolicyContext context) {

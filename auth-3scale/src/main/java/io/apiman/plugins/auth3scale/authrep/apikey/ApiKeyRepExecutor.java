@@ -15,14 +15,11 @@
  */
 package io.apiman.plugins.auth3scale.authrep.apikey;
 
-import io.apiman.common.logging.IApimanLogger;
-import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.plugins.auth3scale.authrep.AbstractRepExecutor;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
-import io.apiman.plugins.auth3scale.util.ParameterMap;
 
 import java.time.OffsetDateTime;
 
@@ -30,12 +27,6 @@ import java.time.OffsetDateTime;
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
 public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
-    // TODO Can't remember the place where we put the special exceptions for this...
-    private static final AsyncResultImpl<Void> OK_CACHED = AsyncResultImpl.create((Void) null);
-    private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user apikey provided!"));
-    private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
-    private static final ApiKeyCachingAuthenticator cachingAuthenticator = new ApiKeyCachingAuthenticator(); // TODO again, shared DS...
-
     private ApiKeyAuthReporter reporter;
 
     public ApiKeyRepExecutor(ApiResponse response, ApiRequest request, IPolicyContext context) {
@@ -52,14 +43,16 @@ public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
     private void doRep() {
         ApiKeyReportData report = new ApiKeyReportData()
                 .setEndpoint(REPORT_ENDPOINT)
+                .setServiceToken(api.getProviderKey())
                 .setUserKey(getUserKey())
                 .setServiceId(Long.toString(api.getApiNumericId()))
-                .setTimestamp( OffsetDateTime.now().toString())
+                .setTimestamp(OffsetDateTime.now().toString())
                 .setUserId(getUserId())
                 .setUsage(buildRepMetrics(api))
                 .setLog(buildLog());
         reporter.addRecord(report);
-    }
+    } // ApiKeyReportData [endpoint=http://su1.3scale.net:80/transactions.xml, serviceToken=null, userKey=6ade731336760382403649c5d75886ee, 
+    // serviceId=2555417735060, timestamp=2016-10-28T22:57:44.273+01:00, userId=null, usage=ParameterMap [data={foo/fooId=1}], log=ParameterMap [data={code=200}]]
 
     private String getUserId() {
         return request.getHeaders().get(AuthRepConstants.USER_ID);

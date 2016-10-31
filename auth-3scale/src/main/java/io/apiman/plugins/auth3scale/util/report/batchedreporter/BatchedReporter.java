@@ -25,17 +25,6 @@ public class BatchedReporter {
     // Change list to RingBuffer?
     private Set<AbstractReporter<? extends ReportData>> reporters = new LinkedHashSet<>();
     private RetryReporter retryReporter = new RetryReporter();
-    
-    
-    // This will not be used concurrently
-//    private final EvictingQueue<ReportToSend> retryQueue = EvictingQueue.<ReportToSend>create(DEFAULT_RETRY_QUEUE_MAXSIZE, DEFAULT_RETRY_QUEUE_MAXSIZE/8)
-//                .warningHandler(a -> { 
-//                    System.err.println("Report retry queue is close to capacity. Records pending retry may soon be evicted and permanently lost."); 
-//                })
-//                .fullHandler(b -> {
-//                    System.err.println("Report retry queue full. Oldest retry reports will be evicted.");
-//                });
-
     private IPeriodicComponent periodic;
     private IHttpClientComponent httpClient;
     private long timerId;
@@ -51,15 +40,21 @@ public class BatchedReporter {
         return started;
     }
 
-    public void addReporter(AbstractReporter<? extends ReportData> reporter) {
+    public BatchedReporter setReportingInterval(int millis) {
+        this.reportingInterval = millis;
+        return this;
+    }
+
+    public BatchedReporter addReporter(AbstractReporter<? extends ReportData> reporter) {
         reporter.setFullHandler(isFull -> {
             send();
         });
 
         reporters.add(reporter);
+        return this;
     }
 
-    public void start(IPeriodicComponent periodic, IHttpClientComponent httpClient) {
+    public BatchedReporter start(IPeriodicComponent periodic, IHttpClientComponent httpClient) {
         if (started)
             throw new IllegalStateException("Already started");
         this.httpClient = httpClient;
@@ -70,6 +65,7 @@ public class BatchedReporter {
             send();
         });
         started = true;
+        return this;
     }
 
     public void stop() {
@@ -157,6 +153,18 @@ public class BatchedReporter {
             return this;
         }
     }
+
+
+
+    // This will not be used concurrently
+//    private final EvictingQueue<ReportToSend> retryQueue = EvictingQueue.<ReportToSend>create(DEFAULT_RETRY_QUEUE_MAXSIZE, DEFAULT_RETRY_QUEUE_MAXSIZE/8)
+//                .warningHandler(a -> {
+//                    System.err.println("Report retry queue is close to capacity. Records pending retry may soon be evicted and permanently lost.");
+//                })
+//                .fullHandler(b -> {
+//                    System.err.println("Report retry queue full. Oldest retry reports will be evicted.");
+//                });
+
 //    
 //    private static class EvictingQueue<T> extends ForwardingQueue<T> {
 //        private final Queue<T> delegate;
