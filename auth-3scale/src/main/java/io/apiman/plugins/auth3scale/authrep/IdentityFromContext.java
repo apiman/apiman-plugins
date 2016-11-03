@@ -25,18 +25,18 @@ import io.apiman.gateway.engine.policy.IPolicyContext;
  */
 public interface IdentityFromContext {
     default String getIdentityElementFromContext(IPolicyContext context, ApiRequest request, Api api, String canonicalName) {
-        String userKey = context.getAttribute("IdentityFromContext::" + canonicalName, null);
-        if (userKey == null) {
+//        String userKey = context.getAttribute("IdentityFromContext::" + canonicalName, null); // TODO caching is likely unnecessary due to refactoring.
+//        if (userKey == null) {
             // canonicalName -> IdentifierElement{ assignedName, location, canonicalName }
             IdentifierElement element = api.getIdentifiers().get(canonicalName);
 
             if (element.getLocation() == IdentifierElement.ElementLocationEnum.HEADER) {
-                userKey = request.getHeaders().get(element.getAssignedName());
+                return request.getHeaders().get(element.getAssignedName());
             } else { // else QUERY
-                userKey = request.getQueryParams().get(element.getAssignedName());
+                return request.getQueryParams().get(element.getAssignedName());
             }
-            context.setAttribute("IdentityFromContext::" + canonicalName, userKey);
-        }
-        return userKey;
+//            context.setAttribute("IdentityFromContext::" + canonicalName, userKey);
+//        }
+        //return userKey;
     }
 }

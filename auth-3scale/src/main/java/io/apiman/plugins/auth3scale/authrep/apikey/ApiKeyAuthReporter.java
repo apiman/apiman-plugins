@@ -25,6 +25,9 @@ import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportToSend;
 
+/**
+ * @author Marc Savy {@literal <msavy@redhat.com>}
+ */
 public class ApiKeyAuthReporter extends AbstractReporter<ApiKeyReportData> {
     @Override // TODO need locking?
     public List<ReportToSend> encode() {

@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+/**
+ * @author Marc Savy {@literal <msavy@redhat.com>}
+ */
 public class OauthAuthReporter extends AbstractReporter<OauthReportData> {
 
     @Override // TODO need locking?
