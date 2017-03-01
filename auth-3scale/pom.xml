@@ -5,7 +5,7 @@
   <parent>
     <groupId>io.apiman.plugins</groupId>
     <artifactId>apiman-plugins</artifactId>
-    <version>1.2.8-SNAPSHOT</version>
+    <version>1.2.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>apiman-plugins-3scale-auth</artifactId>
@@ -28,7 +28,6 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>19.0</version>
     </dependency>
 
 
