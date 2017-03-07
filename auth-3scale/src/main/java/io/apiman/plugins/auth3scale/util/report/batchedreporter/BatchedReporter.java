@@ -15,7 +15,6 @@
  */
 package io.apiman.plugins.auth3scale.util.report.batchedreporter;
 
-import com.google.common.collect.EvictingQueue;
 import io.apiman.gateway.engine.async.IAsyncResult;
 import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPeriodicComponent;
@@ -30,15 +29,18 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
+import com.google.common.collect.EvictingQueue;
+
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
+@SuppressWarnings("nls")
 public class BatchedReporter {
-    private static final int DEFAULT_REPORTING_INTERVAL = 5000;
-    private static final int DEFAULT_INITIAL_WAIT = 5000;    
-    private static final int DEFAULT_RETRY_QUEUE_MAXSIZE = 10000;
+    private static final int DEFAULT_REPORTING_INTERVAL = 10;
+    private static final int DEFAULT_INITIAL_WAIT = 10;
+    private static final int DEFAULT_RETRY_QUEUE_MAXSIZE = 1000;
     private int reportingInterval = DEFAULT_REPORTING_INTERVAL;
-    
+
     // Change list to RingBuffer?
     private Set<AbstractReporter<? extends ReportData>> reporters = new LinkedHashSet<>();
     private RetryReporter retryReporter = new RetryReporter();
@@ -78,7 +80,7 @@ public class BatchedReporter {
         this.periodic = periodic;
 
         this.timerId = periodic.setPeriodicTimer(reportingInterval, DEFAULT_INITIAL_WAIT, id -> {
-            System.out.println("tick! " + id + System.currentTimeMillis());
+            //System.out.println("tick! " + id + System.currentTimeMillis());
             send();
         });
         started = true;
@@ -91,7 +93,7 @@ public class BatchedReporter {
 
     // Avoid any double sending weirdness.
     private void send() {
-        System.out.println("calling send " + itemsOfWork + " and sending is " + sending);
+        //System.out.println("calling send " + itemsOfWork + " and sending is " + sending);
         if (!sending) {
             synchronized (this) {
                 if (!sending) {
@@ -101,7 +103,7 @@ public class BatchedReporter {
             }
         }
     }
-    
+
     private volatile int itemsOfWork = 0;
 
     // speed up / slow down (primitive back-pressure mechanism?)
@@ -114,9 +116,9 @@ public class BatchedReporter {
                 System.out.println("Sending :" + itemsOfWork);
 
                 IHttpClientRequest post = httpClient.request(sendIt.getEndpoint().toString(), // TODO change to broken down components
-                        HttpMethod.POST, 
+                        HttpMethod.POST,
                         new ReportResponseHandler(reportResult -> {
-                            retryIfFailure(reportResult, sendIt);   
+                            retryIfFailure(reportResult, sendIt);
                             // TODO IMPORTANT: invalidate any bad credentials!
                             itemsOfWork--;
                             System.out.println("Attempted to send report: Report was successful? " + reportResult.getResult().success() + " " + itemsOfWork );
@@ -132,7 +134,7 @@ public class BatchedReporter {
     }
 
     private void retryIfFailure(IAsyncResult<ReportResponse> reportResult, ReportToSend report) {
-        if (reportResult.isError()) { 
+        if (reportResult.isError()) {
             // if (reportResult.getResult().isNonFatal()) {
             retryReporter.addRetry(report);
         }
@@ -144,7 +146,7 @@ public class BatchedReporter {
             sending = false;
         }
     }
-    
+
     private static class RetryReporter extends AbstractReporter<ReportData> {
         private Queue<ReportToSend> resendReports = EvictingQueue.create(DEFAULT_RETRY_QUEUE_MAXSIZE);
 
@@ -157,94 +159,14 @@ public class BatchedReporter {
 
         @Override
         public AbstractReporter<ReportData> addRecord(ReportData record) {
-            throw new UnsupportedOperationException("Should not call #addRecord on special retry BatchedReporter");
+            throw new UnsupportedOperationException("Should not call #addRecord on special retry BatchedReporter"); //$NON-NLS-1$
         }
-        
+
         // Notice that super.full() is never triggered, we just evict old records once limit is hit.
         public AbstractReporter<ReportData> addRetry(ReportToSend report) {
-            resendReports.offer(report); 
+            resendReports.offer(report);
             return this;
         }
     }
 
-
-
-    // This will not be used concurrently
-//    private final EvictingQueue<ReportToSend> retryQueue = EvictingQueue.<ReportToSend>create(DEFAULT_RETRY_QUEUE_MAXSIZE, DEFAULT_RETRY_QUEUE_MAXSIZE/8)
-//                .warningHandler(a -> {
-//                    System.err.println("Report retry queue is close to capacity. Records pending retry may soon be evicted and permanently lost.");
-//                })
-//                .fullHandler(b -> {
-//                    System.err.println("Report retry queue full. Oldest retry reports will be evicted.");
-//                });
-
-//    
-//    private static class EvictingQueue<T> extends ForwardingQueue<T> {
-//        private final Queue<T> delegate;
-//        private final int maxSize;
-//        private final int warningRemaining;
-//        private IAsyncHandler<Void> warningHandler;
-//        private IAsyncHandler<Void> fullHandler;
-//
-//        private EvictingQueue(int maxSize, int warningRemaining) {
-//          this.delegate = new ArrayDeque<T>(maxSize);
-//          this.maxSize = maxSize;
-//          this.warningRemaining = warningRemaining;
-//        }
-//
-//        public static <T> EvictingQueue<T> create(int maxSize, int warningSize) {
-//          return new EvictingQueue<T>(maxSize, warningSize);
-//        }
-//
-//        public int remainingCapacity() {
-//          return maxSize - size();
-//        }
-//
-//        @Override protected Queue<T> delegate() {
-//          return delegate;
-//        }
-//
-//        @Override public boolean offer(T e) {
-//          return add(e);
-//        }
-//
-//        @Override public boolean add(T e) {
-//          Objects.nonNull(e);  // check before removing
-//          if (maxSize == 0) {
-//            return true;
-//          }
-//          if (size() == maxSize) {
-//            delegate.remove();
-//            fullHandler.handle((Void) null); // Fire full handler
-//          } else if (remainingCapacity() < warningRemaining) {
-//              warningHandler.handle((Void) null);
-//          }
-//          delegate.add(e);
-//          return true;
-//        }
-//
-//        @Override public boolean addAll(Collection<? extends T> collection) {
-//          return standardAddAll(collection);
-//        }
-//
-//        @Override
-//        public boolean contains(Object object) {
-//          return delegate().contains(Objects.nonNull(object));
-//        }
-//
-//        @Override
-//        public boolean remove(Object object) {
-//          return delegate().remove(Objects.nonNull(object));
-//        }
-//        
-//        public EvictingQueue<T> fullHandler(IAsyncHandler<Void> fullHandler) {
-//            this.fullHandler = fullHandler;
-//            return this;
-//        }
-//        
-//        public EvictingQueue<T> warningHandler(IAsyncHandler<Void> warningHandler) {
-//            this.warningHandler = warningHandler;
-//            return this;
-//        }
-//    }
 }

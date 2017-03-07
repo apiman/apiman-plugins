@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
+ * @param <T> extends ReportData
  */
 public abstract class AbstractReporter<T extends ReportData> {
     private IAsyncHandler<Void> fullHandler;

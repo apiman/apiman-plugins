@@ -17,10 +17,11 @@ package io.apiman.plugins.auth3scale.authrep.oauth;
 
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.beans.ApiRequest;
-import io.apiman.gateway.engine.beans.AuthTypeEnum;
 import io.apiman.gateway.engine.components.http.HttpMethod;
 import io.apiman.gateway.engine.components.http.IHttpClientRequest;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.AuthTypeEnum;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.AbstractAuthExecutor;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyAuthReporter;
@@ -37,8 +38,8 @@ public class OauthAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
 //    private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
 //    private static final AppIdCachingAuthenticator cachingAuthenticator = new AppIdCachingAuthenticator(); // TODO again, shared DS...
 
-    OauthAuthExecutor(ApiRequest request, IPolicyContext context) {
-        super(request, context);
+    OauthAuthExecutor(Content config, ApiRequest request, IPolicyContext context) {
+        super(config, request, context);
     }
 
     @Override
@@ -58,8 +59,8 @@ public class OauthAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
 
     private void doBlockingAuth(IAsyncResultHandler<Void> resultHandler) { // TODO add caching.
         // Auth elems
-        paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey());
-        paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
+        paramMap.add(AuthRepConstants.SERVICE_TOKEN, config.getBackendAuthenticationValue());
+        paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(config.getProxy().getServiceId()));
 
         setIfNotNull(paramMap, AuthRepConstants.ACCESS_TOKEN, request.getHeaders().get(AuthRepConstants.ACCESS_TOKEN));
         setIfNotNull(paramMap, AuthRepConstants.APP_ID, getAppId());
@@ -79,11 +80,11 @@ public class OauthAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
     }
 
     private String getAppId() {
-        return getIdentityElementFromContext(context, request, api, AuthRepConstants.APP_ID);
+        return getIdentityElement(config, request, AuthRepConstants.APP_ID);
     }
 
     private String getClientId() {
-        return getIdentityElementFromContext(context, request, api, AuthRepConstants.CLIENT_ID);
+        return getIdentityElement(config, request, AuthRepConstants.CLIENT_ID);
     }
 
 }

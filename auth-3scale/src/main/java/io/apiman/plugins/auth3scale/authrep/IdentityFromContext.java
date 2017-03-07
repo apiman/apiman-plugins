@@ -15,28 +15,52 @@
  */
 package io.apiman.plugins.auth3scale.authrep;
 
-import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
-import io.apiman.gateway.engine.beans.IdentifierElement;
-import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
+@SuppressWarnings("nls")
 public interface IdentityFromContext {
-    default String getIdentityElementFromContext(IPolicyContext context, ApiRequest request, Api api, String canonicalName) {
+    default String getIdentityElement(Content config, ApiRequest request, String canonicalName) {
 //        String userKey = context.getAttribute("IdentityFromContext::" + canonicalName, null); // TODO caching is likely unnecessary due to refactoring.
 //        if (userKey == null) {
             // canonicalName -> IdentifierElement{ assignedName, location, canonicalName }
-            IdentifierElement element = api.getIdentifiers().get(canonicalName);
-
-            if (element.getLocation() == IdentifierElement.ElementLocationEnum.HEADER) {
-                return request.getHeaders().get(element.getAssignedName());
-            } else { // else QUERY
-                return request.getQueryParams().get(element.getAssignedName());
-            }
+//            IdentifierElement element = api.getIdentifiers().get(canonicalName);
+//
+//            if (element.getLocation() == IdentifierElement.ElementLocationEnum.HEADER) {
+//                return request.getHeaders().get(element.getAssignedName());
+//            } else { // else QUERY
+//                return request.getQueryParams().get(element.getAssignedName());
+//            }
 //            context.setAttribute("IdentityFromContext::" + canonicalName, userKey);
 //        }
         //return userKey;
+
+        // Manual for now as there's no mapping in the config.
+        if (config.getProxy().getCredentialsLocation().equalsIgnoreCase("query")) {
+            return request.getQueryParams().get(getElemFromConfig(config, canonicalName));
+        } else { // Else let's assume header
+            return request.getHeaders().get(getElemFromConfig(config, canonicalName));
+        }
+
     }
+
+    default String getElemFromConfig(Content config, String canonicalName) {
+        switch (config.getAuthType()) {
+        case API_KEY:
+            return config.getProxy().getAuthUserKey();
+        case APP_ID:
+            if (AuthRepConstants.APP_ID.equalsIgnoreCase(canonicalName))
+                return config.getProxy().getAuthAppId();
+            if (AuthRepConstants.APP_KEY.equalsIgnoreCase(canonicalName))
+                return config.getProxy().getAuthAppKey();
+        case OAUTH: // TODO
+            return null;
+        }
+        throw new IllegalStateException(String.format("Unrecognised auth identifier elements for %s with %s", config.getAuthType(), canonicalName));
+    }
+
+
 }

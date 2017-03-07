@@ -19,12 +19,13 @@ import io.apiman.common.logging.IApimanLogger;
 import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.beans.ApiRequest;
-import io.apiman.gateway.engine.beans.AuthTypeEnum;
 import io.apiman.gateway.engine.components.http.HttpMethod;
 import io.apiman.gateway.engine.components.http.IHttpClientRequest;
 import io.apiman.gateway.engine.policy.IPolicyContext;
-import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.AuthTypeEnum;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.AbstractAuthExecutor;
+import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
 
 /**
@@ -40,8 +41,8 @@ public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter>
 
     private final IApimanLogger logger;
 
-    ApiKeyAuthExecutor(ApiRequest request, IPolicyContext context) {
-        super(request, context);
+    ApiKeyAuthExecutor(Content config, ApiRequest request, IPolicyContext context) {
+        super(config, request, context);
         logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
 
@@ -62,27 +63,27 @@ public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter>
             resultHandler.handle(FAIL_PROVIDE_USER_KEY);
             return;
         }
-        
+
         if (!hasRoutes(request)) { // TODO Optimise
             resultHandler.handle(FAIL_NO_ROUTE);
             return;
         }
 
-        if (cachingAuthenticator.isAuthCached(request, userKey)) {
+        if (cachingAuthenticator.isAuthCached(config, request, userKey)) {
             logger.debug("Cached auth on request " + request);
             resultHandler.handle(OK_CACHED);
         } else {
             logger.debug("Uncached auth on request " + request);
             doBlockingAuth(resultHandler, userKey);
-            cachingAuthenticator.cache(request, userKey);
+            cachingAuthenticator.cache(config, request, userKey);
         }
     }
 
     private void doBlockingAuth(IAsyncResultHandler<Void> resultHandler, String userKey) {
         // Auth elems
         paramMap.add(AuthRepConstants.USER_KEY, userKey);
-        paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey()); // maybe use endpoint properties or something. or new properties field.
-        paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
+        paramMap.add(AuthRepConstants.SERVICE_TOKEN, config.getBackendAuthenticationValue());// maybe use endpoint properties or something. or new properties field.
+        paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(config.getProxy().getServiceId()));
 
         setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
         setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
@@ -101,6 +102,6 @@ public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter>
     }
 
     private String getUserKey() {
-        return getIdentityElementFromContext(context, request, api, AuthRepConstants.USER_KEY);
+        return getIdentityElement(config, request, AuthRepConstants.USER_KEY);
     }
 }

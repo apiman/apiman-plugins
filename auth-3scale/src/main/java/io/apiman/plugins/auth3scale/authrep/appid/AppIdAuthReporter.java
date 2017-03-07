@@ -41,7 +41,7 @@ public class AppIdAuthReporter extends AbstractReporter<AppIdReportData> {
             URI endpoint = reportData.getEndpoint();
             // Base report
             ParameterMap data = new ParameterMap();
-            data.add(AuthRepConstants.PROVIDER_KEY, reportData.getServiceToken()); 
+            data.add(AuthRepConstants.SERVICE_TOKEN, reportData.getServiceToken()); 
             data.add(AuthRepConstants.SERVICE_ID, reportData.getServiceId());
 
             // Transactions

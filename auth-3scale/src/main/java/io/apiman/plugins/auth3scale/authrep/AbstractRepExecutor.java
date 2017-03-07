@@ -20,9 +20,10 @@ import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.beans.PolicyFailure;
-import io.apiman.gateway.engine.beans.ProxyBean;
 import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.ProxyRule;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
@@ -47,27 +48,29 @@ public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends R
 
     protected IAsyncHandler<PolicyFailure> policyFailureHandler;
     protected IPolicyContext context;
+    protected Content config;
 
-    private AbstractRepExecutor(ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
+    private AbstractRepExecutor(Content config, ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
         this.request = request;
         this.response = response;
         this.api = api;
+        this.config = config;
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
         this.context = context;
         this.paramMap = new ParameterMap();
     }
 
-    public AbstractRepExecutor(ApiRequest request, ApiResponse response, IPolicyContext context) {
-        this(request, response, request.getApi(), context);
+    public AbstractRepExecutor(Content config, ApiRequest request, ApiResponse response, IPolicyContext context) {
+        this(config, request, response, request.getApi(), context);
     }
 
     public abstract AbstractRepExecutor<T> rep();
-    
+
     public AbstractRepExecutor<T> setPolicyFailureHandler(IAsyncHandler<PolicyFailure> policyFailureHandler) {
         this.policyFailureHandler = policyFailureHandler;
         return this;
     }
-    
+
     public abstract AbstractRepExecutor<T> setReporter(T reporter);
 
 
@@ -91,10 +94,10 @@ public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends R
     protected ParameterMap buildRepMetrics(Api api) {
         ParameterMap pm = new ParameterMap(); // TODO could be interesting to cache a partially built map and just replace values?
 
-        int[] matches = api.getRouteMatcher().match(request.getDestination());
+        int[] matches = config.getProxy().getRouteMatcher().match(request.getDestination());
         if (matches.length > 0) { // TODO could put this into request and process it up front. This logic could be removed from bean.
             for (int matchIndex : matches) {
-                ProxyBean proxyRule = api.getProxyBean().get(matchIndex+1); // Get specific proxy rule that matches. (e.g. / or /foo/bar)
+                ProxyRule proxyRule = config.getProxy().getProxyRules().get(matchIndex+1); // Get specific proxy rule that matches. (e.g. / or /foo/bar)
                 String metricName = proxyRule.getMetricSystemName();
 
                 if (pm.containsKey(metricName)) {

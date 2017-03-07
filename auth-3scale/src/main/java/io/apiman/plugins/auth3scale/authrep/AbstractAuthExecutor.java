@@ -19,17 +19,19 @@ import io.apiman.gateway.engine.async.IAsyncHandler;
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
-import io.apiman.gateway.engine.beans.AuthTypeEnum;
 import io.apiman.gateway.engine.beans.PolicyFailure;
 import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.AuthTypeEnum;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
+ * @param <T> The reporter
  */
 public abstract class AbstractAuthExecutor<T extends AbstractReporter<? extends ReportData>> implements IdentityFromContext {
     protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
@@ -39,21 +41,24 @@ public abstract class AbstractAuthExecutor<T extends AbstractReporter<? extends 
     protected final IPolicyFailureFactoryComponent failureFactory;
     protected final ParameterMap paramMap;
     protected final Api api;
-    
+
     protected IAsyncHandler<PolicyFailure> policyFailureHandler;
     protected IPolicyContext context;
-        
-    private AbstractAuthExecutor(ApiRequest request, Api api, IPolicyContext context) {
+
+    protected Content config; // TODO Weird name from JSON -- refactor if possible
+
+    private AbstractAuthExecutor(Content config, ApiRequest request, Api api, IPolicyContext context) {
         this.request = request;
         this.api = api;
         this.httpClient = context.getComponent(IHttpClientComponent.class);
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
         this.context = context;
         this.paramMap = new ParameterMap();
+        this.config = config;
     }
-    
-    public AbstractAuthExecutor(ApiRequest request, IPolicyContext context) {
-        this(request, request.getApi(), context);
+
+    public AbstractAuthExecutor(Content config, ApiRequest request, IPolicyContext context) {
+        this(config, request, request.getApi(), context);
     }
 
     public abstract AbstractAuthExecutor<T> auth(IAsyncResultHandler<Void> handler);
@@ -72,7 +77,7 @@ public abstract class AbstractAuthExecutor<T extends AbstractReporter<? extends 
     }
 
     protected boolean hasRoutes(ApiRequest req) {
-        return api.getRouteMatcher().match(req.getDestination()).length > 0;
+        return config.getProxy().getRouteMatcher().match(req.getDestination()).length > 0;
     }
 
     public abstract AuthTypeEnum getType();

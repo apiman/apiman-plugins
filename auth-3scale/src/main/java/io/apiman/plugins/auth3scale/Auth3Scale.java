@@ -30,31 +30,33 @@
  */
 package io.apiman.plugins.auth3scale;
 
-import java.util.UUID;
-
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policies.AbstractMappedPolicy;
 import io.apiman.gateway.engine.policy.IPolicyChain;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.ProxyConfigRoot;
 import io.apiman.plugins.auth3scale.authrep.AuthRep;
-import io.apiman.plugins.auth3scale.beans.Auth3ScaleBean;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
+
+import java.util.UUID;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
-    private static final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ";
-    private final BatchedReporter batchedReporter = new BatchedReporter();
-    private final AuthRep authRepFactory = new AuthRep(batchedReporter);
-    private String uuid = UUID.randomUUID().toString();
+@SuppressWarnings("nls")
+public class Auth3Scale extends AbstractMappedPolicy<ProxyConfigRoot> {
+    private final String AUTH3SCALE_REQUEST = Auth3Scale.class.getCanonicalName() + "-REQ";
+    private static final BatchedReporter batchedReporter = new BatchedReporter();
+    private static final AuthRep authRepFactory = new AuthRep(batchedReporter);
+    private final String uuid = UUID.randomUUID().toString();
 
-    protected void doApply(ApiRequest request, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiRequest> chain) {       
+    @Override
+    protected void doApply(ApiRequest request, IPolicyContext context, ProxyConfigRoot config, IPolicyChain<ApiRequest> chain) {
         System.out.println("Thread ID " + Thread.currentThread().getId() + " on " + uuid);
         // Get HTTP Client TODO compare perf with singleton
         // TODO take this from services.backend.endpoint
-        authRepFactory.createAuth(request, context)
+        authRepFactory.createAuth(config.getProxyConfig().getContent(), request, context)
                 .setPolicyFailureHandler(chain::doFailure) // If a policy failure occurs, call chain.doFailure
                 .auth(result -> {         // If succeeds, or exception.
                     if (result.isSuccess()) {
@@ -67,17 +69,19 @@ public class Auth3Scale extends AbstractMappedPolicy<Auth3ScaleBean> {
                 });
     }
 
-    protected void doApply(ApiResponse response, IPolicyContext context, Auth3ScaleBean config, IPolicyChain<ApiResponse> chain) {
-        // Just let it go ahead, and report stuff at our leisure.
-        chain.doApply(response);
-        
+    @Override
+    protected void doApply(ApiResponse response, IPolicyContext context, ProxyConfigRoot config, IPolicyChain<ApiResponse> chain) {
         ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
-        authRepFactory.createRep(response, request, context)
+        authRepFactory.createRep(config.getProxyConfig().getContent(), response, request, context)
             .setPolicyFailureHandler(chain::doFailure)
             .rep();
+
+        // Just let it go ahead, and report stuff at our leisure.
+        chain.doApply(response);
     }
 
-    protected Class<Auth3ScaleBean> getConfigurationClass() {
-        return Auth3ScaleBean.class;
+    @Override
+    protected Class<ProxyConfigRoot> getConfigurationClass() {
+        return ProxyConfigRoot.class;
     }
 }

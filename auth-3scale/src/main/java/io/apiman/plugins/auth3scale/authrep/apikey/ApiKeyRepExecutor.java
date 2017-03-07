@@ -18,6 +18,7 @@ package io.apiman.plugins.auth3scale.authrep.apikey;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.AbstractRepExecutor;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 
@@ -29,11 +30,11 @@ import java.time.OffsetDateTime;
 public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
     private ApiKeyAuthReporter reporter;
 
-    public ApiKeyRepExecutor(ApiResponse response, ApiRequest request, IPolicyContext context) {
-        super(request, response, context);
+    public ApiKeyRepExecutor(Content config, ApiResponse response, ApiRequest request, IPolicyContext context) {
+        super(config, request, response, context);
     }
 
-    // Rep seems to require POST with URLEncoding 
+    // Rep seems to require POST with URLEncoding
     @Override
     public ApiKeyRepExecutor rep() {
         doRep();
@@ -43,15 +44,15 @@ public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
     private void doRep() {
         ApiKeyReportData report = new ApiKeyReportData()
                 .setEndpoint(REPORT_ENDPOINT)
-                .setServiceToken(api.getProviderKey())
+                .setServiceToken(config.getBackendAuthenticationValue())
                 .setUserKey(getUserKey())
-                .setServiceId(Long.toString(api.getApiNumericId()))
+                .setServiceId(Long.toString(config.getProxy().getServiceId()))
                 .setTimestamp(OffsetDateTime.now().toString())
                 .setUserId(getUserId())
                 .setUsage(buildRepMetrics(api))
                 .setLog(buildLog());
         reporter.addRecord(report);
-    } // ApiKeyReportData [endpoint=http://su1.3scale.net:80/transactions.xml, serviceToken=null, userKey=6ade731336760382403649c5d75886ee, 
+    } // ApiKeyReportData [endpoint=http://su1.3scale.net:80/transactions.xml, serviceToken=null, userKey=6ade731336760382403649c5d75886ee,
     // serviceId=2555417735060, timestamp=2016-10-28T22:57:44.273+01:00, userId=null, usage=ParameterMap [data={foo/fooId=1}], log=ParameterMap [data={code=200}]]
 
     private String getUserId() {
@@ -59,7 +60,7 @@ public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
     }
 
     private String getUserKey() {
-        return getIdentityElementFromContext(context, request, api, "user_key");
+        return getIdentityElement(config, request, "user_key");
     }
 
     @Override

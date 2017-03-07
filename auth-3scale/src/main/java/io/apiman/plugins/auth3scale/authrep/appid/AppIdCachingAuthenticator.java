@@ -15,55 +15,37 @@
  */
 package io.apiman.plugins.auth3scale.authrep.appid;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.apiman.gateway.engine.beans.ApiRequest;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
+import io.apiman.plugins.auth3scale.authrep.CachingAuthenticator;
 
-import java.util.Arrays;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-public class AppIdCachingAuthenticator {
-    private static final int CAPACITY = 10_000_000;
+public class AppIdCachingAuthenticator extends CachingAuthenticator {
 
-    private Cache<Integer, Boolean> lruCache = CacheBuilder.newBuilder()
-            .initialCapacity(CAPACITY) // TODO sensible capacity?
-            .expireAfterWrite(10, TimeUnit.MINUTES) // TODO async?
-            .maximumSize(CAPACITY) // LRU capacity
-//            .concurrencyLevel(4) TODO
-            .build();
-
-    boolean isAuthCached(ApiRequest serviceRequest, String appKey, String appId) {
+    boolean isAuthCached(Content config, ApiRequest serviceRequest, String appKey, String appId) {
         try {
             return lruCache.get(getCacheKey(serviceRequest.getApiId(), appKey, appId,
-                    hashArray(serviceRequest)), () -> false);
+                    hashArray(config, serviceRequest)), () -> false);
         } catch (ExecutionException e) {
             throw new UncheckedExecutionException(e);
         }
     }
 
-    AppIdCachingAuthenticator cache(ApiRequest serviceRequest, String appKey, String appId) {
+    AppIdCachingAuthenticator cache(Content config, ApiRequest serviceRequest, String appKey, String appId) {
         lruCache.put(getCacheKey(serviceRequest.getApiId(), appKey, appId,
-                hashArray(serviceRequest)), true); // true is just placeholder
+                hashArray(config, serviceRequest)), true); // true is just placeholder
         return this;
     }
 
-    public AppIdCachingAuthenticator invalidate(ApiRequest serviceRequest, String appKey, String appId) { // TODO invalidate will be with what apikey..?
+    public AppIdCachingAuthenticator invalidate(Content config, ApiRequest serviceRequest, String appKey, String appId) { // TODO invalidate will be with what apikey..?
         lruCache.invalidate(getCacheKey(serviceRequest.getApiId(), appKey, appId,
-                hashArray(serviceRequest)));
+                hashArray(config, serviceRequest)));
         return this;
-    }
-
-    private int getCacheKey(Object... objects) {
-        return Objects.hash(objects);
-    }
-
-    private int hashArray(ApiRequest req) {
-        return Arrays.hashCode(req.getApi().getRouteMatcher().match(req.getDestination())); // TODO optimise
     }
 }

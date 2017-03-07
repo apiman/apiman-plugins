@@ -19,10 +19,11 @@ import io.apiman.common.logging.IApimanLogger;
 import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.async.IAsyncResultHandler;
 import io.apiman.gateway.engine.beans.ApiRequest;
-import io.apiman.gateway.engine.beans.AuthTypeEnum;
 import io.apiman.gateway.engine.components.http.HttpMethod;
 import io.apiman.gateway.engine.components.http.IHttpClientRequest;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.AuthTypeEnum;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.AbstractAuthExecutor;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyAuthReporter;
@@ -41,8 +42,8 @@ public class AppIdAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
 
     private final IApimanLogger logger;
 
-    public AppIdAuthExecutor(ApiRequest request, IPolicyContext context) {
-        super(request, context);
+    public AppIdAuthExecutor(Content config, ApiRequest request, IPolicyContext context) {
+        super(config, request, context);
         logger = context.getLogger(AppIdAuthExecutor.class);
     }
 
@@ -76,13 +77,13 @@ public class AppIdAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
             return;
         }
 
-        if (cachingAuthenticator.isAuthCached(request, appId, appKey)) {
+        if (cachingAuthenticator.isAuthCached(config, request, appId, appKey)) {
             logger.debug("Cached auth on request " + request);
             resultHandler.handle(OK_CACHED);
         } else {
             logger.debug("Uncached auth on request " + request);
             doBlockingAuth(resultHandler, appId, appKey);
-            cachingAuthenticator.cache(request, appId, appKey);
+            cachingAuthenticator.cache(config, request, appId, appKey);
         }
     }
 
@@ -90,8 +91,8 @@ public class AppIdAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
         // Auth elems
         paramMap.add(AuthRepConstants.APP_ID, appId);
         paramMap.add(AuthRepConstants.APP_KEY, appKey); // TODO possibly optional according to API docs, but not 100% clear
-        paramMap.add(AuthRepConstants.PROVIDER_KEY, request.getApi().getProviderKey());
-        paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(request.getApi().getApiNumericId()));
+        paramMap.add(AuthRepConstants.SERVICE_TOKEN, config.getBackendAuthenticationValue());
+        paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(config.getProxy().getServiceId()));
 
         setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
         setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
@@ -106,10 +107,10 @@ public class AppIdAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> 
     }
 
     private String getAppKey() {
-        return getIdentityElementFromContext(context, request, api, AuthRepConstants.APP_KEY);
+        return getIdentityElement(config, request, AuthRepConstants.APP_KEY);
     }
 
     private String getAppId() {
-        return getIdentityElementFromContext(context, request, api, AuthRepConstants.APP_ID);
+        return getIdentityElement(config, request, AuthRepConstants.APP_ID);
     }
 }

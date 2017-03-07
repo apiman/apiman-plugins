@@ -47,6 +47,12 @@
       <artifactId>apiman-gateway-engine-policies</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>io.apiman</groupId>
+      <artifactId>apiman-gateway-engine-vertx-polling</artifactId>
+      <version>1.2.10-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- Testing -->
     <dependency>

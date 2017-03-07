@@ -18,6 +18,7 @@ package io.apiman.plugins.auth3scale.authrep.appid;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.AbstractRepExecutor;
 import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 
@@ -29,11 +30,11 @@ import java.time.OffsetDateTime;
 public class AppIdRepExecutor extends AbstractRepExecutor<AppIdAuthReporter> {
     private AppIdAuthReporter reporter;
 
-    public AppIdRepExecutor(ApiResponse response, ApiRequest request, IPolicyContext context) {
-        super(request, response, context);
+    public AppIdRepExecutor(Content config, ApiResponse response, ApiRequest request, IPolicyContext context) {
+        super(config, request, response, context);
     }
 
-    // Rep seems to require POST with URLEncoding 
+    // Rep seems to require POST with URLEncoding
     @Override
     public AppIdRepExecutor rep() {
         doRep();
@@ -43,8 +44,8 @@ public class AppIdRepExecutor extends AbstractRepExecutor<AppIdAuthReporter> {
     private void doRep() {
         AppIdReportData report = new AppIdReportData()
                 .setEndpoint(REPORT_ENDPOINT)
-                .setServiceToken(api.getProviderKey())
-                .setServiceId(Long.toString(api.getApiNumericId()))
+                .setServiceToken(config.getBackendAuthenticationValue())
+                .setServiceId(Long.toString(config.getProxy().getServiceId()))
                 .setAppId(getAppId())
                 .setUserId(getUserId())
                 .setTimestamp(OffsetDateTime.now().toString())
@@ -54,11 +55,11 @@ public class AppIdRepExecutor extends AbstractRepExecutor<AppIdAuthReporter> {
     }
 
     private String getAppId() {
-        return getIdentityElementFromContext(context, request, api, AuthRepConstants.APP_ID);
+        return getIdentityElement(config, request, AuthRepConstants.APP_ID);
     }
 
     private String getUserId() {
-        return getIdentityElementFromContext(context, request, api, AuthRepConstants.USER_ID);
+        return getIdentityElement(config, request, AuthRepConstants.USER_ID);
     }
 
     @Override

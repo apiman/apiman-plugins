@@ -17,10 +17,11 @@ package io.apiman.plugins.auth3scale.authrep;
 
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
-import io.apiman.gateway.engine.beans.AuthTypeEnum;
 import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPeriodicComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.AuthTypeEnum;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyFactory;
 import io.apiman.plugins.auth3scale.authrep.appid.AppIdFactory;
 import io.apiman.plugins.auth3scale.authrep.oauth.OauthFactory;
@@ -28,10 +29,12 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
+@SuppressWarnings("nls")
 public class AuthRep {
     private Map<AuthTypeEnum, AuthRepFactory> factories = new HashMap<>();
     private BatchedReporter batchedReporter;
@@ -52,23 +55,27 @@ public class AuthRep {
                 .addReporter(appIdFactory.getReporter())
                 .addReporter(oauthFactory.getReporter());
     }
-    
-    public AbstractAuthExecutor<?> createAuth(ApiRequest request, IPolicyContext context) {
-        return factories.get(request.getApi().getAuthType()).createAuth(request, context);
+
+    public AbstractAuthExecutor<?> createAuth(Content config, ApiRequest request, IPolicyContext context) {
+        return factories.get(config.getAuthType()).createAuth(config, request, context);
     }
 
-    public AbstractRepExecutor<?> createRep(ApiResponse response, ApiRequest request, IPolicyContext context) {
+    public AbstractRepExecutor<?> createRep(Content config, ApiResponse response, ApiRequest request, IPolicyContext context) {
         safeInitialise(context);
-        return factories.get(request.getApi().getAuthType()).createRep(response, request, context);
+        return factories.get(config.getAuthType()).createRep(config, response, request, context);
     }
-    
+
+    String uuid = UUID.randomUUID().toString();
+
+    // TODO no longer thing DLC is necessary.
     private void safeInitialise(IPolicyContext context) {
         if (!reporterInitialised) {
             synchronized (this) {
                 if (!reporterInitialised) {
-                    System.out.println("Initialising reporter...");
+                    System.out.println("Initialising reporter... RID " + uuid);
                     batchedReporter.start(context.getComponent(IPeriodicComponent.class), context.getComponent(IHttpClientComponent.class));
                     reporterInitialised = true;
+                    System.out.println("Escaping...");
                 }
             }
         }

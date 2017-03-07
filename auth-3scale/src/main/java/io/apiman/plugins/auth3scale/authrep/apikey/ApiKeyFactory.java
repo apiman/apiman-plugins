@@ -18,6 +18,7 @@ package io.apiman.plugins.auth3scale.authrep.apikey;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.policy.IPolicyContext;
+import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.AuthRepFactory;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
 
@@ -27,12 +28,14 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter
 public class ApiKeyFactory implements AuthRepFactory {
     private final ApiKeyAuthReporter reporter = new ApiKeyAuthReporter();
 
-    public ApiKeyAuthExecutor createAuth(ApiRequest request, IPolicyContext context) {
-        return new ApiKeyAuthExecutor(request, context);
+    @Override
+    public ApiKeyAuthExecutor createAuth(Content config, ApiRequest request, IPolicyContext context) {
+        return new ApiKeyAuthExecutor(config, request, context);
     }
 
-    public ApiKeyRepExecutor createRep(ApiResponse response, ApiRequest request, IPolicyContext context) {
-        return new ApiKeyRepExecutor(response, request, context).setReporter(reporter);
+    @Override
+    public ApiKeyRepExecutor createRep(Content config, ApiResponse response, ApiRequest request, IPolicyContext context) {
+        return new ApiKeyRepExecutor(config, response, request, context).setReporter(reporter);
     }
 
     @Override
