@@ -45,6 +45,10 @@
       <artifactId>apiman-test-policies</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.apiman</groupId>
+      <artifactId>apiman-common-logging-core</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
