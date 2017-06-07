@@ -55,11 +55,11 @@ public class Auth3Scale extends AbstractMappedPolicy<ProxyConfigRoot> {
     protected void doApply(ApiRequest request, IPolicyContext context, ProxyConfigRoot config, IPolicyChain<ApiRequest> chain) {
         System.out.println("Thread ID " + Thread.currentThread().getId() + " on " + uuid);
         // Get HTTP Client TODO compare perf with singleton
-        // TODO take this from services.backend.endpoint
-        authRepFactory.createAuth(config.getProxyConfig().getContent(), request, context)
+        authRepFactory.getAuth(config.getProxyConfig().getContent(), request, context)
                 .setPolicyFailureHandler(chain::doFailure) // If a policy failure occurs, call chain.doFailure
                 .auth(result -> {         // If succeeds, or exception.
                     if (result.isSuccess()) {
+                        System.out.println("Thread ID " + Thread.currentThread().getId() + " on " + uuid);
                         // Keep the API request around so the auth apikey(s) can be accessed, etc.
                         context.setAttribute(AUTH3SCALE_REQUEST, request);
                         chain.doApply(request);
@@ -71,13 +71,14 @@ public class Auth3Scale extends AbstractMappedPolicy<ProxyConfigRoot> {
 
     @Override
     protected void doApply(ApiResponse response, IPolicyContext context, ProxyConfigRoot config, IPolicyChain<ApiResponse> chain) {
-        ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
-        authRepFactory.createRep(config.getProxyConfig().getContent(), response, request, context)
-            .setPolicyFailureHandler(chain::doFailure)
-            .rep();
-
+        System.out.println("Do apply respond");
         // Just let it go ahead, and report stuff at our leisure.
         chain.doApply(response);
+
+        ApiRequest request = context.getAttribute(AUTH3SCALE_REQUEST, null);
+        authRepFactory.getRep(config.getProxyConfig().getContent(), response, request, context)
+            .setPolicyFailureHandler(chain::doFailure)
+            .rep();
     }
 
     @Override

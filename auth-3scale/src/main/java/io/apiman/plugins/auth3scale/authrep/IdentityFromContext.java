@@ -23,28 +23,13 @@ import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
  */
 @SuppressWarnings("nls")
 public interface IdentityFromContext {
-    default String getIdentityElement(Content config, ApiRequest request, String canonicalName) {
-//        String userKey = context.getAttribute("IdentityFromContext::" + canonicalName, null); // TODO caching is likely unnecessary due to refactoring.
-//        if (userKey == null) {
-            // canonicalName -> IdentifierElement{ assignedName, location, canonicalName }
-//            IdentifierElement element = api.getIdentifiers().get(canonicalName);
-//
-//            if (element.getLocation() == IdentifierElement.ElementLocationEnum.HEADER) {
-//                return request.getHeaders().get(element.getAssignedName());
-//            } else { // else QUERY
-//                return request.getQueryParams().get(element.getAssignedName());
-//            }
-//            context.setAttribute("IdentityFromContext::" + canonicalName, userKey);
-//        }
-        //return userKey;
-
+    default String getIdentityElement(Content config, ApiRequest request, String canonicalName)  {
         // Manual for now as there's no mapping in the config.
         if (config.getProxy().getCredentialsLocation().equalsIgnoreCase("query")) {
             return request.getQueryParams().get(getElemFromConfig(config, canonicalName));
         } else { // Else let's assume header
             return request.getHeaders().get(getElemFromConfig(config, canonicalName));
         }
-
     }
 
     default String getElemFromConfig(Content config, String canonicalName) {
@@ -61,6 +46,5 @@ public interface IdentityFromContext {
         }
         throw new IllegalStateException(String.format("Unrecognised auth identifier elements for %s with %s", config.getAuthType(), canonicalName));
     }
-
 
 }

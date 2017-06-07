@@ -20,10 +20,12 @@ import io.apiman.gateway.engine.beans.Api;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
 import io.apiman.gateway.engine.beans.PolicyFailure;
+import io.apiman.gateway.engine.components.IHttpClientComponent;
 import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.ProxyRule;
+import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyAuthReporter;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
@@ -32,36 +34,43 @@ import java.net.URI;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
+ * @param <T> the type
  */
 public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends ReportData>>
         implements IdentityFromContext {
 
-    protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80";
-    protected static final String REPORT_PATH = "/transactions.xml";
+    protected static final String DEFAULT_BACKEND = "http://su1.3scale.net:80"; // TODO add to config
+    protected static final String REPORT_PATH = "/transactions.xml"; //$NON-NLS-1$
     protected static final URI REPORT_ENDPOINT = URI.create(DEFAULT_BACKEND+REPORT_PATH);
 
     protected final ApiRequest request;
     protected final ApiResponse response;
     protected final IPolicyFailureFactoryComponent failureFactory;
+    protected final IHttpClientComponent httpClient;
     protected final ParameterMap paramMap;
     protected final Api api;
+    protected final ApiKeyAuthReporter reporter;
 
     protected IAsyncHandler<PolicyFailure> policyFailureHandler;
     protected IPolicyContext context;
     protected Content config;
 
-    private AbstractRepExecutor(Content config, ApiRequest request, ApiResponse response, Api api, IPolicyContext context) {
+    private AbstractRepExecutor(Content config, ApiRequest request, ApiResponse response, Api api, IPolicyContext context,
+            ApiKeyAuthReporter reporter) {
         this.request = request;
         this.response = response;
         this.api = api;
         this.config = config;
+        this.reporter = reporter;
         this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
+        this.httpClient = context.getComponent(IHttpClientComponent.class);
         this.context = context;
         this.paramMap = new ParameterMap();
     }
 
-    public AbstractRepExecutor(Content config, ApiRequest request, ApiResponse response, IPolicyContext context) {
-        this(config, request, response, request.getApi(), context);
+    public AbstractRepExecutor(Content config, ApiRequest request, ApiResponse response, IPolicyContext context,
+            ApiKeyAuthReporter reporter, CachingAuthenticator authCache) {
+        this(config, request, response, request.getApi(), context, reporter);
     }
 
     public abstract AbstractRepExecutor<T> rep();
@@ -70,9 +79,6 @@ public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends R
         this.policyFailureHandler = policyFailureHandler;
         return this;
     }
-
-    public abstract AbstractRepExecutor<T> setReporter(T reporter);
-
 
     /**
      * Mapping Rules Syntax A Mapping Rule has to start with '/'. This looks for
@@ -121,5 +127,13 @@ public abstract class AbstractRepExecutor<T extends AbstractReporter<? extends R
 
     protected ParameterMap buildLog() {
         return new ParameterMap().add("code", (long) response.getCode());
+    }
+
+    protected ParameterMap setIfNotNull(ParameterMap in, String k, String v) {
+        if (v == null)
+            return in;
+
+        in.add(k, v);
+        return in;
     }
 }

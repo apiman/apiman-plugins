@@ -27,15 +27,17 @@ import io.apiman.plugins.auth3scale.util.report.batchedreporter.AbstractReporter
  */
 public class ApiKeyFactory implements AuthRepFactory {
     private final ApiKeyAuthReporter reporter = new ApiKeyAuthReporter();
+    private final ApiKeyCachingAuthenticator authCache = new ApiKeyCachingAuthenticator();
+
 
     @Override
     public ApiKeyAuthExecutor createAuth(Content config, ApiRequest request, IPolicyContext context) {
-        return new ApiKeyAuthExecutor(config, request, context);
+        return new ApiKeyAuthExecutor(config, request, context, authCache);
     }
 
     @Override
     public ApiKeyRepExecutor createRep(Content config, ApiResponse response, ApiRequest request, IPolicyContext context) {
-        return new ApiKeyRepExecutor(config, response, request, context).setReporter(reporter);
+        return new ApiKeyRepExecutor(config, request, response, context, reporter, authCache);
     }
 
     @Override

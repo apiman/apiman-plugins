@@ -33,16 +33,19 @@ import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
  */
 public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter> {
     private static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
+    private static final String AUTHREP_PATH = "/transactions/authrep.xml?";
+
     // TODO Can't remember the place where we put the special exceptions for this...
     private static final AsyncResultImpl<Void> OK_CACHED = AsyncResultImpl.create((Void) null);
     private static final AsyncResultImpl<Void> FAIL_PROVIDE_USER_KEY = AsyncResultImpl.create(new RuntimeException("No user apikey provided!"));
     private static final AsyncResultImpl<Void> FAIL_NO_ROUTE = AsyncResultImpl.create(new RuntimeException("No valid route"));
-    private static final ApiKeyCachingAuthenticator cachingAuthenticator = new ApiKeyCachingAuthenticator(); // TODO again, shared DS...
 
     private final IApimanLogger logger;
+    private ApiKeyCachingAuthenticator authCache;
 
-    ApiKeyAuthExecutor(Content config, ApiRequest request, IPolicyContext context) {
+    ApiKeyAuthExecutor(Content config, ApiRequest request, IPolicyContext context, ApiKeyCachingAuthenticator authCache) {
         super(config, request, context);
+        this.authCache = authCache;
         logger = context.getLogger(ApiKeyAuthExecutor.class);
     }
 
@@ -69,33 +72,44 @@ public class ApiKeyAuthExecutor extends AbstractAuthExecutor<ApiKeyAuthReporter>
             return;
         }
 
-        if (cachingAuthenticator.isAuthCached(config, request, userKey)) {
+        // If we have no cache entry, then block. Otherwise, the request can immediately go
+        // through and we will resolve the rate limiting status post hoc (various strategies
+        // depending on settings).
+        if (authCache.isAuthCached(config, request, userKey)) {
             logger.debug("Cached auth on request " + request);
             resultHandler.handle(OK_CACHED);
+            context.setAttribute("3scale.userKey", userKey);
         } else {
             logger.debug("Uncached auth on request " + request);
-            doBlockingAuth(resultHandler, userKey);
-            cachingAuthenticator.cache(config, request, userKey);
+            context.setAttribute("3scale.blocking", true); // TODO
+            doBlockingAuthRep(userKey, result -> {
+                logger.debug("Blocking auth success: {0}", result.isSuccess());
+                // Only cache if successful
+                if (result.isSuccess()) {
+                    authCache.cache(config, request, userKey);
+                }
+                // Pass result up.
+                resultHandler.handle(result);
+            });
         }
     }
 
-    private void doBlockingAuth(IAsyncResultHandler<Void> resultHandler, String userKey) {
-        // Auth elems
+    @SuppressWarnings("nls")
+    private void doBlockingAuthRep(String userKey, IAsyncResultHandler<Void> resultHandler) {
         paramMap.add(AuthRepConstants.USER_KEY, userKey);
         paramMap.add(AuthRepConstants.SERVICE_TOKEN, config.getBackendAuthenticationValue());// maybe use endpoint properties or something. or new properties field.
         paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(config.getProxy().getServiceId()));
+        paramMap.add(AuthRepConstants.USAGE, buildRepMetrics(api));
 
         setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
         setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
 
-        // TODO can also do predicted usage, if we see value in that..?
-        // Switch between oauth, apikey, and id+apikey when added
-        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHORIZE_PATH + paramMap.encode(),
+        IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHREP_PATH + paramMap.encode(),
                 HttpMethod.GET,
-                new AuthResponseHandler(resultHandler, policyFailureHandler, failureFactory));
+                new AuthResponseHandler(failureFactory)
+                    .failureHandler(policyFailureHandler)
+                    .resultHandler(resultHandler));
 
-        //get.setConnectTimeout(1000);
-        //get.setReadTimeout(1000);
         get.addHeader("Accept-Charset", "UTF-8");
         get.addHeader("X-3scale-User-Client", "apiman");
         get.end();

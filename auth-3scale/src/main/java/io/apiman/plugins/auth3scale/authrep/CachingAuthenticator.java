@@ -21,7 +21,6 @@ import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -31,11 +30,9 @@ public abstract class CachingAuthenticator {
 
     protected Cache<Integer, Boolean> lruCache = CacheBuilder.newBuilder()
             .initialCapacity(CAPACITY) // TODO sensible capacity?
-            .expireAfterWrite(10, TimeUnit.MINUTES)
             .maximumSize(CAPACITY) // LRU capacity
-//            .concurrencyLevel(4) TODO
+            .concurrencyLevel(Runtime.getRuntime().availableProcessors())
             .build();
-
 
     protected int getCacheKey(Object... objects) {
         return Objects.hash(objects);

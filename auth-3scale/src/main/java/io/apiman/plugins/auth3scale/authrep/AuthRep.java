@@ -23,8 +23,6 @@ import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.AuthTypeEnum;
 import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.apikey.ApiKeyFactory;
-import io.apiman.plugins.auth3scale.authrep.appid.AppIdFactory;
-import io.apiman.plugins.auth3scale.authrep.oauth.OauthFactory;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.BatchedReporter;
 
 import java.util.HashMap;
@@ -44,23 +42,23 @@ public class AuthRep {
         this.batchedReporter = batchedReporter;
 
         ApiKeyFactory apiKeyFactory = new ApiKeyFactory();
-        AppIdFactory appIdFactory = new AppIdFactory();
-        OauthFactory oauthFactory = new OauthFactory();
+//        AppIdFactory appIdFactory = new AppIdFactory();
+//        OauthFactory oauthFactory = new OauthFactory();
 
         factories.put(AuthTypeEnum.API_KEY, apiKeyFactory);
-        factories.put(AuthTypeEnum.APP_ID, appIdFactory);
-        factories.put(AuthTypeEnum.OAUTH, oauthFactory);
+//        factories.put(AuthTypeEnum.APP_ID, appIdFactory);
+//        factories.put(AuthTypeEnum.OAUTH, oauthFactory);
 
-        batchedReporter.addReporter(apiKeyFactory.getReporter())
-                .addReporter(appIdFactory.getReporter())
-                .addReporter(oauthFactory.getReporter());
+        batchedReporter.addReporter(apiKeyFactory.getReporter());
+//                .addReporter(appIdFactory.getReporter())
+//                .addReporter(oauthFactory.getReporter());
     }
 
-    public AbstractAuthExecutor<?> createAuth(Content config, ApiRequest request, IPolicyContext context) {
+    public AbstractAuthExecutor<?> getAuth(Content config, ApiRequest request, IPolicyContext context) {
         return factories.get(config.getAuthType()).createAuth(config, request, context);
     }
 
-    public AbstractRepExecutor<?> createRep(Content config, ApiResponse response, ApiRequest request, IPolicyContext context) {
+    public AbstractRepExecutor<?> getRep(Content config, ApiResponse response, ApiRequest request, IPolicyContext context) {
         safeInitialise(context);
         return factories.get(config.getAuthType()).createRep(config, response, request, context);
     }
