@@ -32,7 +32,6 @@ import java.util.UUID;
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
  */
-@SuppressWarnings("nls")
 public class AuthRep {
     private Map<AuthTypeEnum, AuthRepFactory> factories = new HashMap<>();
     private BatchedReporter batchedReporter;
@@ -65,15 +64,13 @@ public class AuthRep {
 
     String uuid = UUID.randomUUID().toString();
 
-    // TODO no longer thing DLC is necessary.
+    // TODO Could convert to component to avoid DCL.
     private void safeInitialise(IPolicyContext context) {
         if (!reporterInitialised) {
             synchronized (this) {
                 if (!reporterInitialised) {
-                    System.out.println("Initialising reporter... RID " + uuid);
                     batchedReporter.start(context.getComponent(IPeriodicComponent.class), context.getComponent(IHttpClientComponent.class));
                     reporterInitialised = true;
-                    System.out.println("Escaping...");
                 }
             }
         }

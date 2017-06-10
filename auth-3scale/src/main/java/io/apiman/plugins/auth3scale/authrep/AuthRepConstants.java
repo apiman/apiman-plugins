@@ -20,6 +20,11 @@ package io.apiman.plugins.auth3scale.authrep;
  */
 @SuppressWarnings("nls")
 public interface AuthRepConstants {
+    String DEFAULT_BACKEND = "http://su1.3scale.net:80";
+    String AUTHORIZE_PATH = "/transactions/authorize.xml?";
+    String AUTHREP_PATH = "/transactions/authrep.xml?";
+    String REPORT_PATH = "/transactions/report.xml?";
+
     String USER_KEY = "user_key";
     String SERVICE_ID = "service_id";
     String SERVICE_TOKEN = "service_token";

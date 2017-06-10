@@ -15,11 +15,11 @@
  */
 package io.apiman.plugins.auth3scale.authrep.apikey;
 
-import java.net.URI;
-import java.util.Objects;
-
 import io.apiman.plugins.auth3scale.util.ParameterMap;
 import io.apiman.plugins.auth3scale.util.report.batchedreporter.ReportData;
+
+import java.net.URI;
+import java.util.Objects;
 
 /**
  * @author Marc Savy {@literal <msavy@redhat.com>}
@@ -108,6 +108,7 @@ public class ApiKeyReportData implements ReportData {
         return this;
     }
 
+    @Override
     public int groupId() {
         return hashCode();
     }
@@ -117,6 +118,7 @@ public class ApiKeyReportData implements ReportData {
         return Objects.hash(endpoint, serviceToken, serviceId);
     }
 
+    @SuppressWarnings("nls")
     @Override
     public String toString() {
         return "ApiKeyReportData [endpoint=" + endpoint + ", serviceToken=" + serviceToken + ", userKey="

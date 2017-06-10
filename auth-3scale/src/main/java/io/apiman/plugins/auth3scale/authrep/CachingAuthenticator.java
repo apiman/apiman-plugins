@@ -39,6 +39,6 @@ public abstract class CachingAuthenticator {
     }
 
     protected int hashArray(Content config, ApiRequest req) {
-        return Arrays.hashCode(config.getProxy().getRouteMatcher().match(req.getDestination()));
+        return Arrays.hashCode(config.getProxy().getRouteMatcher().match(req.getDestination())); // TODO we should cache this
     }
 }

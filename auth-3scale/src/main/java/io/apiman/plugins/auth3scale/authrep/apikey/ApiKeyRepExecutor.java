@@ -15,18 +15,33 @@
  */
 package io.apiman.plugins.auth3scale.authrep.apikey;
 
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.AUTHREP_PATH;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.DEFAULT_BACKEND;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.LOG;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.REFERRER;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.REPORT_PATH;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.SERVICE_ID;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.SERVICE_TOKEN;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.USAGE;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.USER_ID;
+import static io.apiman.plugins.auth3scale.authrep.AuthRepConstants.USER_KEY;
+
 import io.apiman.common.logging.IApimanLogger;
+import io.apiman.gateway.engine.async.AsyncResultImpl;
 import io.apiman.gateway.engine.beans.ApiRequest;
 import io.apiman.gateway.engine.beans.ApiResponse;
+import io.apiman.gateway.engine.components.IHttpClientComponent;
+import io.apiman.gateway.engine.components.IPolicyFailureFactoryComponent;
 import io.apiman.gateway.engine.components.http.HttpMethod;
 import io.apiman.gateway.engine.components.http.IHttpClientRequest;
 import io.apiman.gateway.engine.policy.IPolicyContext;
 import io.apiman.gateway.engine.vertx.polling.fetchers.threescale.beans.Content;
 import io.apiman.plugins.auth3scale.authrep.AbstractRepExecutor;
-import io.apiman.plugins.auth3scale.authrep.AuthRepConstants;
 import io.apiman.plugins.auth3scale.util.ParameterMap;
+import io.apiman.plugins.auth3scale.util.Status;
 import io.apiman.plugins.auth3scale.util.report.AuthResponseHandler;
 
+import java.net.URI;
 import java.time.OffsetDateTime;
 
 /**
@@ -34,17 +49,26 @@ import java.time.OffsetDateTime;
  */
 @SuppressWarnings("nls")
 public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
-    private static final String AUTHORIZE_PATH = "/transactions/authorize.xml?";
-    private static final String AUTHREP_PATH = "/transactions/authrep.xml?";
-
-    private ApiKeyAuthReporter reporter;
-    private IApimanLogger logger;
-    private ApiKeyCachingAuthenticator authCache;
+    private static final URI REPORT_ENDPOINT = URI.create(DEFAULT_BACKEND+REPORT_PATH);
+    private final Content config;
+    private final ApiRequest request;
+    private final IPolicyContext context;
+    private final ApiKeyAuthReporter reporter;
+    private final ApiKeyCachingAuthenticator authCache;
+    private final IHttpClientComponent httpClient;
+    private final IPolicyFailureFactoryComponent failureFactory;
+    private final IApimanLogger logger;
 
     public ApiKeyRepExecutor(Content config, ApiRequest request, ApiResponse response, IPolicyContext context, ApiKeyAuthReporter reporter, ApiKeyCachingAuthenticator authCache) {
         super(config, request, response, context, reporter, authCache);
-        logger = context.getLogger(ApiKeyRepExecutor.class); // TODO think about static
+        this.config = config;
+        this.request = request;
+        this.context = context;
+        this.reporter = reporter;
         this.authCache = authCache;
+        this.httpClient = context.getComponent(IHttpClientComponent.class);
+        this.failureFactory = context.getComponent(IPolicyFailureFactoryComponent.class);
+        this.logger = context.getLogger(ApiKeyRepExecutor.class);
     }
 
     // Rep seems to require POST with URLEncoding
@@ -70,15 +94,14 @@ public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
     private void doAsyncAuthRep() {
         // Auth elems
         ParameterMap paramMap = new ParameterMap();
-        paramMap.add(AuthRepConstants.USER_KEY, context.getAttribute("3scale.userKey", ""));
-        paramMap.add(AuthRepConstants.SERVICE_TOKEN, config.getBackendAuthenticationValue());// maybe use endpoint properties or something. or new properties field.
-        paramMap.add(AuthRepConstants.SERVICE_ID, Long.toString(config.getProxy().getServiceId()));
-        paramMap.add(AuthRepConstants.USAGE, buildRepMetrics(api));
+        paramMap.add(USER_KEY, context.getAttribute("3scale.userKey", ""));
+        paramMap.add(SERVICE_TOKEN, config.getBackendAuthenticationValue());// maybe use endpoint properties or something. or new properties field.
+        paramMap.add(SERVICE_ID, Long.toString(config.getProxy().getServiceId()));
+        paramMap.add(USAGE, buildRepMetrics());
+        paramMap.add(LOG, buildLog());
 
-        setIfNotNull(paramMap, AuthRepConstants.REFERRER, request.getHeaders().get(AuthRepConstants.REFERRER));
-        setIfNotNull(paramMap, AuthRepConstants.USER_ID, request.getHeaders().get(AuthRepConstants.USER_ID));
-
-        System.out.println(DEFAULT_BACKEND + AUTHREP_PATH + paramMap.encode());
+        setIfNotNull(paramMap, REFERRER, request.getHeaders().get(REFERRER));
+        setIfNotNull(paramMap, USER_ID, request.getHeaders().get(USER_ID));
 
         IHttpClientRequest get = httpClient.request(DEFAULT_BACKEND + AUTHREP_PATH + paramMap.encode(),
                 HttpMethod.GET,
@@ -86,21 +109,25 @@ public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
                 .failureHandler(failure -> {
                     // At this point can't do anything but log it.
                     logger.debug("Async AuthRep failure code {0} on: {1}",  failure.getResponseCode(), paramMap);
-                    // Flush cache entry for this user.
-                    flushCache();
                 })
-                .resultHandler(result -> {
-                    if (result.isError()) {
-                        logger.debug("Unexpected error: {0}.", result.getError());
+                .exceptionHandler(ex -> AsyncResultImpl.create(ex))
+                .statusHandler(status -> {
+                    if (!status.isAuthorized() || rateLimitReached(status)) {
                         flushCache();
-                    } else {
-                        logger.debug("Reported successfully.");
                     }
                 }));
 
         get.addHeader("Accept-Charset", "UTF-8");
         get.addHeader("X-3scale-User-Client", "apiman");
         get.end();
+    }
+
+    private boolean rateLimitReached(Status status) {
+        return status.getUsageReports()
+            .stream()
+            .filter(report -> report.getCurrentValue() == report.getMaxValue())
+            .findFirst()
+            .isPresent();
     }
 
     private void flushCache() {
@@ -117,7 +144,7 @@ public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
                 .setServiceId(Long.toString(config.getProxy().getServiceId()))
                 .setTimestamp(OffsetDateTime.now().toString())
                 .setUserId(getUserId())
-                .setUsage(buildRepMetrics(api))
+                .setUsage(buildRepMetrics())
                 .setLog(buildLog());
 
         logger.debug("Adding a report to batch.");
@@ -125,10 +152,11 @@ public class ApiKeyRepExecutor extends AbstractRepExecutor<ApiKeyAuthReporter> {
     }
 
     private String getUserId() {
-        return request.getHeaders().get(AuthRepConstants.USER_ID);
+        return request.getHeaders().get(USER_ID);
     }
 
     private String getUserKey() {
         return getIdentityElement(config, request, "user_key");
     }
+
 }
