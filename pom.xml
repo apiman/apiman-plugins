@@ -262,6 +262,8 @@
     <module>log-policy</module>
     <module>simple-header-policy</module>
     <module>soap-authorization-policy</module>
+    <module>super-duper-policy</module>
+    <module>test-policy</module>
     <module>transformation-policy</module>
     <module>unique-header-policy</module>
     <module>url-whitelist-policy</module>
