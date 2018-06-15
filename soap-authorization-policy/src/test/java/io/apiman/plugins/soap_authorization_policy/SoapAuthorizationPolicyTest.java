@@ -38,6 +38,7 @@ import org.junit.Test;
  *
  * @author rubenrm1@gmail.com
  * @author rachel.yordan@redhat.com
+ * @author tevo.souza@hotmail.com
  * Test the {@link SoapAuthorizationPolicy}.
  *
  */
@@ -63,6 +64,30 @@ public class SoapAuthorizationPolicyTest extends ApimanPolicyTest {
         PolicyTestResponse response = send(request);
         EchoResponse echo = response.entity(EchoResponse.class);
         Assert.assertNotNull(echo);
+    }
+    
+    @Test
+    @Configuration("{\r\n" +
+                "  \"rules\" : [\r\n" +
+                "    { \"action\" : \"*\", \"role\" : \"role-1\" }\r\n" +
+                "  ]\r\n" +
+                "}")
+    public void testNoSOAPHeader() throws Throwable {
+        HashSet<String> userRoles = new HashSet<>();
+        userRoles.add("role-1");
+        
+        PolicyTestRequest request = PolicyTestRequest.build(PolicyTestRequestType.GET, "/invoices/1");
+       
+        try {
+        	request.contextAttribute(SoapAuthorizationPolicy.AUTHENTICATED_USER_ROLES, userRoles);
+        	send(request);
+        	Assert.fail("expected a failure response");
+        }
+        catch (PolicyFailureError failure)
+        {
+        	 Assert.assertNotNull(failure.getFailure());
+        	 Assert.assertEquals(PolicyFailureType.Other, failure.getFailure().getType());
+        }
     }
 
     @Test
