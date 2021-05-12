@@ -64,6 +64,25 @@
       </roles>
     </developer>
   </developers>
+  
+  <!-- Keep this for SNAPSHOT versions so we can still resolve the parent. Arguably should use `settings.xml` instead -->
+  <repositories>
+    <repository>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>snapshots-repo</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </repository>
+  </repositories>
 
   <properties>
     <version.apiman>2.0.1-SNAPSHOT</version.apiman>
