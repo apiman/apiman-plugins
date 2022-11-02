@@ -53,6 +53,7 @@ public class JWTPolicy extends AbstractMappedPolicy<JWTPolicyBean> {
     private static final String[] schemes = {"http","https"};
     private static final UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
     private JwkProvider provider = null;
+    private String providerUrl = null;
 
     @Override
     public Class<JWTPolicyBean> getConfigurationClass() {
@@ -117,8 +118,9 @@ public class JWTPolicy extends AbstractMappedPolicy<JWTPolicyBean> {
 
         // check if we have to use jwk(s)
         if (urlValidator.isValid(config.getSigningKeyString())){
-            if (provider == null){
+            if ( (provider == null) || (!config.getSigningKeyString().equals(providerUrl)) ) {
                 provider = getNewJwksProvider(config.getSigningKeyString());
+                providerUrl = config.getSigningKeyString();
             }
 
             Jwk jwk;
