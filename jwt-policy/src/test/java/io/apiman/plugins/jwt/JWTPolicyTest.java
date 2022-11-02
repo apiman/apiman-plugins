@@ -81,7 +81,7 @@ public class JWTPolicyTest extends ApimanPolicyTest {
                     "      \"n\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getModulus().toByteArray()) +"\",\n" +
                     "      \"kty\":\"RSA\",\n" +
                     "      \"alg\": \"RS256\"\n" +
-                    "    }" +
+                    "    }\n" +
                     "  ]\n" +
                     "}")
             );
