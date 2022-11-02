@@ -119,7 +119,7 @@ public class JWTPolicy extends AbstractMappedPolicy<JWTPolicyBean> {
 
         // check if we have to use jwk(s)
         if (urlValidator.isValid(config.getSigningKeyString())){
-            if ( (provider == null) || (!config.getSigningKeyString().equals(providerUrl)) ) {
+            if ( (provider == null) || !config.getSigningKeyString().equals(providerUrl) ) {
                 provider = getNewJwksProvider(config.getSigningKeyString());
                 providerUrl = config.getSigningKeyString();
             }
