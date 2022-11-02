@@ -74,36 +74,36 @@ public class JWTPolicyTest extends ApimanPolicyTest {
         RSAPublicKey rsa2 = getPublicRsaKey(PUBLIC_KEY_PEM_2);
         mockServerClient.when(request().withMethod("GET").withPath("/jwks.json"))
             .respond(response().withStatusCode(200)
-                    .withBody("{\"keys\": [\n" +
-                            "    {\n" +
-                            "      \"kid\": null,\n" +
-                            "      \"e\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getPublicExponent().toByteArray()) +"\",\n" +
-                            "      \"n\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getModulus().toByteArray()) +"\",\n" +
-                            "      \"kty\":\"RSA\",\n" +
-                            "      \"alg\": \"RS256\"\n" +
-                            "    }" +
-                            "  ]\n" +
-                            "}")
+            .withBody("{\"keys\": [\n" +
+                    "    {\n" +
+                    "      \"kid\": null,\n" +
+                    "      \"e\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getPublicExponent().toByteArray()) +"\",\n" +
+                    "      \"n\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getModulus().toByteArray()) +"\",\n" +
+                    "      \"kty\":\"RSA\",\n" +
+                    "      \"alg\": \"RS256\"\n" +
+                    "    }" +
+                    "  ]\n" +
+                    "}")
             );
         mockServerClient.when(request().withMethod("GET").withPath("/jwks_multiple.json"))
             .respond(response().withStatusCode(200)
-                    .withBody("{\"keys\": [\n" +
-                            "    {\n" +
-                            "      \"kid\": \"" + KEYID_KEY + "\",\n" +
-                            "      \"e\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getPublicExponent().toByteArray()) +"\",\n" +
-                            "      \"n\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getModulus().toByteArray()) +"\",\n" +
-                            "      \"kty\":\"RSA\",\n" +
-                            "      \"alg\": \"RS256\"\n" +
-                            "    },\n" +
-                            "    {\n" +
-                            "      \"kid\": \"" + KEYID_KEY_2 + "\",\n" +
-                            "      \"e\": \""+ Base64.getUrlEncoder().encodeToString(rsa2.getPublicExponent().toByteArray()) +"\",\n" +
-                            "      \"n\": \""+ Base64.getUrlEncoder().encodeToString(rsa2.getModulus().toByteArray()) +"\",\n" +
-                            "      \"kty\":\"RSA\",\n" +
-                            "      \"alg\": \"RS256\"\n" +
-                            "    }" +
-                            "  ]\n" +
-                            "}")
+            .withBody("{\"keys\": [\n" +
+                    "    {\n" +
+                    "      \"kid\": \"" + KEYID_KEY + "\",\n" +
+                    "      \"e\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getPublicExponent().toByteArray()) +"\",\n" +
+                    "      \"n\": \""+ Base64.getUrlEncoder().encodeToString(rsa.getModulus().toByteArray()) +"\",\n" +
+                    "      \"kty\":\"RSA\",\n" +
+                    "      \"alg\": \"RS256\"\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"kid\": \"" + KEYID_KEY_2 + "\",\n" +
+                    "      \"e\": \""+ Base64.getUrlEncoder().encodeToString(rsa2.getPublicExponent().toByteArray()) +"\",\n" +
+                    "      \"n\": \""+ Base64.getUrlEncoder().encodeToString(rsa2.getModulus().toByteArray()) +"\",\n" +
+                    "      \"kty\":\"RSA\",\n" +
+                    "      \"alg\": \"RS256\"\n" +
+                    "    }" +
+                    "  ]\n" +
+                    "}")
             );
     }
 
