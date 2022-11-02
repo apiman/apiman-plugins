@@ -32,6 +32,7 @@ import io.jsonwebtoken.PrematureJwtException;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.lang.Objects;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 
 import java.net.MalformedURLException;
@@ -124,13 +125,20 @@ public class JWTPolicy extends AbstractMappedPolicy<JWTPolicyBean> {
             }
 
             Jwk jwk;
+            String tokenKid = config.getKid();
+            if ((config.getKid() == null) || config.getKid().equals("null")) {
+                // No specific kid was set in the config, so let's support key rollover and try to find the one
+                // specified in the token.
+                String tokenNoSig = StringUtils.substringBeforeLast(token, ".") + ".";
+                tokenKid = (String) Jwts.parser().parse(tokenNoSig).getHeader().getOrDefault("kid", null);
+            }
             try {
-                jwk = provider.get(config.getKid());
+                jwk = provider.get(tokenKid);
                 if (config.getSigningKey() == null || !(config.getSigningKey().equals(jwk.getPublicKey()))) {
                     config.setSigningKey(jwk.getPublicKey());
                 }
             } catch (JwkException e) {
-               throw new SignatureException("JWK was not found with kid: " + config.getKid(), e);
+               throw new SignatureException("JWK was not found with kid: " + tokenKid, e);
             }
         }
 
