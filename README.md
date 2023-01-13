@@ -1,4 +1,3 @@
-![Verify Build Workflow](https://github.com/Apiman/apiman-plugins/workflows/Verify%20Build%20Workflow/badge.svg)
+== We've moved!
 
-# apiman-plugins
-A repository for official apiman plugins.
+Official and community curated Apiman plugins are now part of the [Apiman monorepo](https://github.com/apiman/apiman) 
